@@ -17,10 +17,10 @@ type BuildingShape = 'box' | 'cylinder' | 'pyramid' | 'stepped' | 'neo-gothic' |
 
 // Building refs interface for centralized animation
 interface BuildingRefs {
-  buildingRef: React.RefObject<THREE.Group>
-  windowsRef: React.RefObject<THREE.InstancedMesh>
-  neonAccentRef: React.RefObject<THREE.Mesh>
-  signageRef: React.RefObject<THREE.Mesh>
+  buildingRef: React.RefObject<THREE.Group | null>
+  windowsRef: React.RefObject<THREE.InstancedMesh | null>
+  neonAccentRef: React.RefObject<THREE.Mesh | null>
+  signageRef: React.RefObject<THREE.Mesh | null>
   windowData: Array<{ position: THREE.Vector3; lit: boolean; isBalcony: boolean }>
 }
 

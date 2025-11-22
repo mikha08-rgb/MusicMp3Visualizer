@@ -11,9 +11,9 @@ interface FlyingVehiclesProps {
 }
 
 interface VehicleRefs {
-  groupRef: React.RefObject<THREE.Group>
-  lightRef: React.RefObject<THREE.PointLight>
-  trailRef: React.RefObject<THREE.Mesh>
+  groupRef: React.RefObject<THREE.Group | null>
+  lightRef: React.RefObject<THREE.PointLight | null>
+  trailRef: React.RefObject<THREE.Mesh | null>
   pathRadius: number
   pathAngleOffset: number
   height: number
@@ -118,15 +118,13 @@ function FlyingVehicle({
         <bufferGeometry>
           <bufferAttribute
             attach="attributes-position"
-            count={5}
-            array={new Float32Array([
+            args={[new Float32Array([
               0, 0, 0,
               -0.2, 0.1, 0,
               -0.4, 0.2, 0,
               -0.2, -0.1, 0,
               -0.4, -0.2, 0,
-            ])}
-            itemSize={3}
+            ]), 3]}
           />
         </bufferGeometry>
         <pointsMaterial
@@ -142,15 +140,13 @@ function FlyingVehicle({
         <bufferGeometry>
           <bufferAttribute
             attach="attributes-position"
-            count={5}
-            array={new Float32Array([
+            args={[new Float32Array([
               0, 0, 0,
               -0.2, 0.1, 0,
               -0.4, 0.2, 0,
               -0.2, -0.1, 0,
               -0.4, -0.2, 0,
-            ])}
-            itemSize={3}
+            ]), 3]}
           />
         </bufferGeometry>
         <pointsMaterial

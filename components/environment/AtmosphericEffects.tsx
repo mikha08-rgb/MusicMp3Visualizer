@@ -125,9 +125,7 @@ export default function AtmosphericEffects({
           <bufferGeometry>
             <bufferAttribute
               attach="attributes-position"
-              count={rainData.positions.length / 3}
-              array={rainData.positions}
-              itemSize={3}
+              args={[rainData.positions, 3]}
             />
           </bufferGeometry>
           <pointsMaterial
@@ -146,9 +144,7 @@ export default function AtmosphericEffects({
         <bufferGeometry>
           <bufferAttribute
             attach="attributes-position"
-            count={fogData.positions.length / 3}
-            array={fogData.positions}
-            itemSize={3}
+            args={[fogData.positions, 3]}
           />
         </bufferGeometry>
         <pointsMaterial
@@ -166,9 +162,7 @@ export default function AtmosphericEffects({
         <bufferGeometry>
           <bufferAttribute
             attach="attributes-position"
-            count={100}
-            array={new Float32Array(Array.from({ length: 300 }, () => (Math.random() - 0.5) * 120))}
-            itemSize={3}
+            args={[new Float32Array(Array.from({ length: 300 }, () => (Math.random() - 0.5) * 120)), 3]}
           />
         </bufferGeometry>
         <pointsMaterial

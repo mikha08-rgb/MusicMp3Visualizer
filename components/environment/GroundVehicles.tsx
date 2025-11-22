@@ -13,9 +13,9 @@ interface GroundVehiclesProps {
 }
 
 interface VehicleRefs {
-  groupRef: React.RefObject<THREE.Group>
-  headlightsRef: React.RefObject<THREE.Mesh>
-  brakelightsRef: React.RefObject<THREE.Mesh>
+  groupRef: React.RefObject<THREE.Group | null>
+  headlightsRef: React.RefObject<THREE.Mesh | null>
+  brakelightsRef: React.RefObject<THREE.Mesh | null>
   pathRadius: number
   pathAngle: number
   speed: number

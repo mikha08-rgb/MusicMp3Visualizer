@@ -14,9 +14,9 @@ interface MarketStallsProps {
 }
 
 interface StallRefs {
-  signRef: React.RefObject<THREE.Mesh>
-  displayRef: React.RefObject<THREE.Mesh>
-  awningRef: React.RefObject<THREE.Mesh>
+  signRef: React.RefObject<THREE.Mesh | null>
+  displayRef: React.RefObject<THREE.Mesh | null>
+  awningRef: React.RefObject<THREE.Mesh | null>
   pulsePhase: number
 }
 
@@ -106,9 +106,8 @@ function MarketStall({
           <points position={[0, 1.5, 0]}>
             <bufferGeometry>
               <bufferAttribute
-                attach="attributes-position"
-                count={8}
-                array={new Float32Array([
+            attach="attributes-position"
+            args={[new Float32Array([
                   -0.3, 0, 0,
                   0.3, 0, 0,
                   -0.2, 0.3, 0,
@@ -117,9 +116,8 @@ function MarketStall({
                   0.1, 0.6, 0,
                   0, 0.9, 0,
                   0, 1.2, 0,
-                ])}
-                itemSize={3}
-              />
+                ]), 3]}
+          />
             </bufferGeometry>
             <pointsMaterial
               size={0.3}

@@ -14,8 +14,8 @@ interface HolographicBillboardsProps {
 }
 
 interface BillboardRefs {
-  meshRef: React.RefObject<THREE.Mesh>
-  glowRef: React.RefObject<THREE.Mesh>
+  meshRef: React.RefObject<THREE.Mesh | null>
+  glowRef: React.RefObject<THREE.Mesh | null>
   baseY: number
   rotation: number
   pulseSpeed: number

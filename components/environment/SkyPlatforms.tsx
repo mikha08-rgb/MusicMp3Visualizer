@@ -14,10 +14,10 @@ interface SkyPlatformsProps {
 }
 
 interface PlatformRefs {
-  platformRef: React.RefObject<THREE.Group>
-  beamRef: React.RefObject<THREE.Mesh>
-  lightRingRef: React.RefObject<THREE.Mesh>
-  energyFieldRef: React.RefObject<THREE.Mesh>
+  platformRef: React.RefObject<THREE.Group | null>
+  beamRef: React.RefObject<THREE.Mesh | null>
+  lightRingRef: React.RefObject<THREE.Mesh | null>
+  energyFieldRef: React.RefObject<THREE.Mesh | null>
   pulsePhase: number
   height: number
 }

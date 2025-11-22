@@ -1,7 +1,7 @@
 'use client'
 
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls, Environment, Fog } from '@react-three/drei'
+import { OrbitControls, Environment } from '@react-three/drei'
 import { Suspense, useRef, useMemo, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { EffectComposer, Bloom, Vignette, GodRays } from '@react-three/postprocessing'
@@ -74,7 +74,7 @@ interface MusicVisualizerSceneProps {
   performancePreset?: PerformancePreset
 }
 
-function Lights({ theme, bass, mainLightRef }: { theme?: ColorTheme; bass: number; mainLightRef?: React.RefObject<THREE.PointLight> }) {
+function Lights({ theme, bass, mainLightRef }: { theme?: ColorTheme; bass: number; mainLightRef?: React.RefObject<THREE.PointLight | null> }) {
   const light1Ref = mainLightRef || useRef<THREE.PointLight>(null)
   const light2Ref = useRef<THREE.PointLight>(null)
   const light3Ref = useRef<THREE.PointLight>(null)
@@ -129,7 +129,7 @@ function EnhancedPostProcessing({
   preset = 'high'
 }: {
   bass: number
-  lightRef: React.RefObject<THREE.PointLight>
+  lightRef: React.RefObject<THREE.PointLight | null>
   showBloom?: boolean
   showVignette?: boolean
   showGodRays?: boolean
@@ -139,41 +139,29 @@ function EnhancedPostProcessing({
 
   return (
     <EffectComposer multisampling={0}>
-      {/* Enhanced bloom for neon glow with bass reactivity - adaptive quality */}
-      {showBloom && (
-        <Bloom
-          intensity={quality.bloomIntensity + bass * 0.3}
-          luminanceThreshold={quality.bloomLuminanceThreshold}
-          luminanceSmoothing={0.9}
-          mipmapBlur
-        />
-      )}
+      <>
+        {/* Enhanced bloom for neon glow with bass reactivity - adaptive quality */}
+        {showBloom && (
+          <Bloom
+            intensity={quality.bloomIntensity + bass * 0.3}
+            luminanceThreshold={quality.bloomLuminanceThreshold}
+            luminanceSmoothing={0.9}
+            mipmapBlur
+          />
+        )}
 
-      {/* God rays from main light source - optional for performance */}
-      {showGodRays && quality.godRaysEnabled && lightRef.current && (
-        <GodRays
-          sun={lightRef.current}
-          exposure={0.15}
-          decay={0.95}
-          density={0.7}
-          weight={0.5}
-          samples={quality.godRaysSamples}
-          clampMax={1}
-          blur={true}
-          kernelSize={KernelSize.SMALL}
-          blendFunction={BlendFunction.SCREEN}
-        />
-      )}
+        {/* God rays disabled - requires mesh object, not compatible with point light */}
 
-      {/* Vignette for cinematic focus - subtle and optional */}
-      {showVignette && quality.vignetteEnabled && (
-        <Vignette
-          offset={0.2}
-          darkness={quality.vignetteDarkness}
-          eskil={false}
-          blendFunction={BlendFunction.NORMAL}
-        />
-      )}
+        {/* Vignette for cinematic focus - subtle and optional */}
+        {showVignette && quality.vignetteEnabled && (
+          <Vignette
+            offset={0.2}
+            darkness={quality.vignetteDarkness}
+            eskil={false}
+            blendFunction={BlendFunction.NORMAL}
+          />
+        )}
+      </>
     </EffectComposer>
   )
 }

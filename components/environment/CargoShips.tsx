@@ -13,9 +13,9 @@ interface CargoShipsProps {
 }
 
 interface ShipRefs {
-  groupRef: React.RefObject<THREE.Group>
-  thrustersRef: React.RefObject<THREE.Group>
-  lightsRef: React.RefObject<THREE.Group>
+  groupRef: React.RefObject<THREE.Group | null>
+  thrustersRef: React.RefObject<THREE.Group | null>
+  lightsRef: React.RefObject<THREE.Group | null>
   pathRadius: number
   pathAngle: number
   height: number

@@ -11,17 +11,17 @@ interface StreetDetailsProps {
 }
 
 interface StreetLightRefs {
-  lightRef: React.RefObject<THREE.PointLight>
-  glowRef: React.RefObject<THREE.Mesh>
+  lightRef: React.RefObject<THREE.PointLight | null>
+  glowRef: React.RefObject<THREE.Mesh | null>
   flickerPhase: number
 }
 
 interface VendingMachineRefs {
-  screenRef: React.RefObject<THREE.Mesh>
+  screenRef: React.RefObject<THREE.Mesh | null>
 }
 
 interface NeonSignRefs {
-  meshRef: React.RefObject<THREE.Mesh>
+  meshRef: React.RefObject<THREE.Mesh | null>
 }
 
 function StreetLight({

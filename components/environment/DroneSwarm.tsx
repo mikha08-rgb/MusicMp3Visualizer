@@ -167,8 +167,8 @@ export default function DroneSwarm({
         // Hide by scaling to zero
         tempObject.scale.set(0, 0, 0)
         tempObject.updateMatrix()
-        dronesRef.current.setMatrixAt(i, tempObject.matrix)
-        lightsRef.current.setMatrixAt(i, tempObject.matrix)
+        dronesRef.current!.setMatrixAt(i, tempObject.matrix)
+        lightsRef.current!.setMatrixAt(i, tempObject.matrix)
         return
       }
 
@@ -224,7 +224,7 @@ export default function DroneSwarm({
       tempObject.rotation.y = angle + Math.PI / 2
       tempObject.rotation.x = Math.sin(time * 3 + drone.phase) * 0.2
       tempObject.updateMatrix()
-      dronesRef.current.setMatrixAt(i, tempObject.matrix)
+      dronesRef.current!.setMatrixAt(i, tempObject.matrix)
 
       // Light - vary position and size by type
       const lightYOffset = drone.droneType === 'surveillance-quad' ? -0.15 : -0.2
@@ -235,18 +235,18 @@ export default function DroneSwarm({
         baseSize * 0.5
       )
       tempObject.updateMatrix()
-      lightsRef.current.setMatrixAt(i, tempObject.matrix)
+      lightsRef.current!.setMatrixAt(i, tempObject.matrix)
 
       // Color pulse
       const intensity = 0.6 + highs * 0.4
       tempColor.copy(drone.color).multiplyScalar(intensity)
-      lightsRef.current.setColorAt(i, tempColor)
+      lightsRef.current!.setColorAt(i, tempColor)
     })
 
-    dronesRef.current.instanceMatrix.needsUpdate = true
-    lightsRef.current.instanceMatrix.needsUpdate = true
-    if (lightsRef.current.instanceColor) {
-      lightsRef.current.instanceColor.needsUpdate = true
+    dronesRef.current!.instanceMatrix.needsUpdate = true
+    lightsRef.current!.instanceMatrix.needsUpdate = true
+    if (lightsRef.current!.instanceColor) {
+      lightsRef.current!.instanceColor.needsUpdate = true
     }
   })
 
@@ -284,8 +284,7 @@ export default function DroneSwarm({
         <bufferGeometry>
           <bufferAttribute
             attach="attributes-position"
-            count={60}
-            array={new Float32Array(
+            args={[new Float32Array(
               Array.from({ length: 180 }, (_, i) => {
                 const angle = (i / 60) * Math.PI * 2
                 const radius = 30 + (i % 3) * 15
@@ -293,8 +292,7 @@ export default function DroneSwarm({
                 if (i % 3 === 1) return 15 + (i % 20)
                 return Math.sin(angle) * radius
               })
-            )}
-            itemSize={3}
+            ), 3]}
           />
         </bufferGeometry>
         <pointsMaterial

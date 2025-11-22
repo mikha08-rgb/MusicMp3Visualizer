@@ -3,7 +3,11 @@
 import { useRef, useMemo, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { easing, smoothLerp } from '@/lib/animationUtils'
+
+// Simple easing functions
+const easeInOutCubic = (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+const easeOutQuad = (t: number) => 1 - (1 - t) * (1 - t)
+const smoothLerp = (a: number, b: number, alpha: number, easingFn: (t: number) => number) => a + (b - a) * easingFn(alpha)
 
 interface OrbitalElementsProps {
   mids: number
@@ -184,7 +188,7 @@ export default function OrbitalElements({
       const pos1 = currentFormation(i, particleCount, targetRadius)
       const pos2 = nextFormation(i, particleCount, targetRadius)
 
-      particle.targetPos.lerpVectors(pos1, pos2, easing.easeInOutCubic(formationStateRef.current.morphProgress))
+      particle.targetPos.lerpVectors(pos1, pos2, easeInOutCubic(formationStateRef.current.morphProgress))
 
       // Add orbital motion
       const orbitAngle = time * particle.orbitSpeed + particle.orbitPhase
@@ -209,7 +213,7 @@ export default function OrbitalElements({
       particle.trailPositions.unshift(particle.currentPos.clone())
 
       // Update energy based on audio
-      particle.energy = smoothLerp(particle.energy, highs * 0.8 + beatIntensityRef.current * 0.2, 0.15, easing.easeOutQuad)
+      particle.energy = smoothLerp(particle.energy, highs * 0.8 + beatIntensityRef.current * 0.2, 0.15, easeOutQuad)
 
       // Set particle transform
       tempObject.position.copy(particle.currentPos)

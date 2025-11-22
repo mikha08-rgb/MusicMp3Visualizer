@@ -191,8 +191,7 @@ export default function GroundCrowd({
         <bufferGeometry>
           <bufferAttribute
             attach="attributes-position"
-            count={50}
-            array={new Float32Array(
+            args={[new Float32Array(
               Array.from({ length: 150 }, (_, i) => {
                 const angle = (i / 50) * Math.PI * 2
                 const radius = 35 + (i % 3) * 10
@@ -200,8 +199,7 @@ export default function GroundCrowd({
                 if (i % 3 === 1) return Math.random() * 2
                 return Math.sin(angle) * radius
               })
-            )}
-            itemSize={3}
+            ), 3]}
           />
         </bufferGeometry>
         <pointsMaterial

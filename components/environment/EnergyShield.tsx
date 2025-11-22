@@ -175,17 +175,13 @@ function EnergyParticles({
     <points ref={particlesRef}>
       <bufferGeometry>
         <bufferAttribute
-          attach="attributes-position"
-          count={particleData.count}
-          array={particleData.positions}
-          itemSize={3}
-        />
+            attach="attributes-position"
+            args={[particleData.positions, 3]}
+          />
         <bufferAttribute
-          attach="attributes-color"
-          count={particleData.count}
-          array={particleData.colors}
-          itemSize={3}
-        />
+            attach="attributes-color"
+            args={[particleData.colors, 3]}
+          />
       </bufferGeometry>
       <pointsMaterial
         size={0.3}
