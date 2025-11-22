@@ -4,7 +4,7 @@ import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Environment, Fog } from '@react-three/drei'
 import { Suspense, useRef, useMemo, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { EffectComposer, Bloom, Vignette, ChromaticAberration, GodRays } from '@react-three/postprocessing'
+import { EffectComposer, Bloom, Vignette, GodRays } from '@react-three/postprocessing'
 import { BlendFunction, KernelSize } from 'postprocessing'
 import * as THREE from 'three'
 import LayeredRings from './visualizations/LayeredRings'
@@ -63,13 +63,14 @@ interface MusicVisualizerSceneProps {
   highs: number
   beatDetected: boolean
   isPlaying: boolean
-  showPostProcessing?: boolean
+  showBloom?: boolean
+  showVignette?: boolean
+  showGodRays?: boolean
   showParticles?: boolean
   showFPS?: boolean
   onFPSUpdate?: (fps: number) => void
   theme?: ColorTheme
   visualizationMode?: 'rings' | 'spectrum'
-  showGodRays?: boolean
   performancePreset?: PerformancePreset
 }
 
@@ -122,11 +123,15 @@ function Lights({ theme, bass, mainLightRef }: { theme?: ColorTheme; bass: numbe
 function EnhancedPostProcessing({
   bass,
   lightRef,
-  showGodRays,
+  showBloom = true,
+  showVignette = true,
+  showGodRays = false,
   preset = 'high'
 }: {
   bass: number
   lightRef: React.RefObject<THREE.PointLight>
+  showBloom?: boolean
+  showVignette?: boolean
   showGodRays?: boolean
   preset?: PerformancePreset
 }) {
@@ -135,15 +140,17 @@ function EnhancedPostProcessing({
   return (
     <EffectComposer multisampling={0}>
       {/* Enhanced bloom for neon glow with bass reactivity - adaptive quality */}
-      <Bloom
-        intensity={quality.bloomIntensity + bass * 0.3}
-        luminanceThreshold={quality.bloomLuminanceThreshold}
-        luminanceSmoothing={0.9}
-        mipmapBlur
-      />
+      {showBloom && (
+        <Bloom
+          intensity={quality.bloomIntensity + bass * 0.3}
+          luminanceThreshold={quality.bloomLuminanceThreshold}
+          luminanceSmoothing={0.9}
+          mipmapBlur
+        />
+      )}
 
       {/* God rays from main light source - optional for performance */}
-      {quality.godRaysEnabled && showGodRays && lightRef.current && (
+      {showGodRays && quality.godRaysEnabled && lightRef.current && (
         <GodRays
           sun={lightRef.current}
           exposure={0.15}
@@ -158,23 +165,12 @@ function EnhancedPostProcessing({
         />
       )}
 
-      {/* Vignette for cinematic focus - can be disabled for performance */}
-      {quality.vignetteEnabled && (
+      {/* Vignette for cinematic focus - subtle and optional */}
+      {showVignette && quality.vignetteEnabled && (
         <Vignette
           offset={0.2}
-          darkness={0.7}
+          darkness={quality.vignetteDarkness}
           eskil={false}
-          blendFunction={BlendFunction.NORMAL}
-        />
-      )}
-
-      {/* Subtle chromatic aberration for cyberpunk feel - adaptive intensity */}
-      {quality.chromaticAberrationEnabled && (
-        <ChromaticAberration
-          offset={[
-            (0.0015 + bass * 0.0005) * quality.chromaticAberrationIntensity,
-            (0.0015 + bass * 0.0005) * quality.chromaticAberrationIntensity
-          ]}
           blendFunction={BlendFunction.NORMAL}
         />
       )}
@@ -189,13 +185,14 @@ export default function MusicVisualizerScene({
   highs,
   beatDetected,
   isPlaying,
-  showPostProcessing = true,
+  showBloom = true,
+  showVignette = true,
+  showGodRays = false,
   showParticles = true,
   showFPS = false,
   onFPSUpdate,
   theme,
   visualizationMode = 'rings',
-  showGodRays = false,
   performancePreset = 'high'
 }: MusicVisualizerSceneProps) {
   const mainLightRef = useRef<THREE.PointLight>(null)
@@ -334,11 +331,13 @@ export default function MusicVisualizerScene({
 
           <Environment preset="night" />
 
-          {/* Post-processing effects */}
-          {showPostProcessing && (
+          {/* Post-processing effects - individual control for each effect */}
+          {(showBloom || showVignette || showGodRays) && (
             <EnhancedPostProcessing
               bass={bass}
               lightRef={mainLightRef}
+              showBloom={showBloom}
+              showVignette={showVignette}
               showGodRays={showGodRays}
               preset={performancePreset}
             />

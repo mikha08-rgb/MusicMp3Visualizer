@@ -19,7 +19,9 @@ export default function Home() {
   // UI state with localStorage persistence
   const [volume, setVolume] = useLocalStorage('visualizer-volume', 0.7)
   const [showFPS, setShowFPS] = useLocalStorage('visualizer-showFPS', true)
-  const [showPostProcessing, setShowPostProcessing] = useLocalStorage('visualizer-postProcessing', false) // Disabled by default for max FPS
+  const [showBloom, setShowBloom] = useLocalStorage('visualizer-bloom', true) // Bloom enabled by default
+  const [showVignette, setShowVignette] = useLocalStorage('visualizer-vignette', true) // Vignette enabled by default
+  const [showGodRays, setShowGodRays] = useLocalStorage('visualizer-godRays', false) // God rays disabled by default for performance
   const [showParticles, setShowParticles] = useLocalStorage('visualizer-particles', true)
   const [savedThemeName, setSavedThemeName] = useLocalStorage('visualizer-theme', 'cyberpunk')
   const [visualizationMode, setVisualizationMode] = useLocalStorage<'rings' | 'spectrum'>('visualizer-mode', 'rings')
@@ -72,7 +74,8 @@ export default function Home() {
   const handleFPSUpdate = useCallback((newFPS: number) => {
     setFps(newFPS)
 
-    if (autoAdaptiveQuality && showPostProcessing) {
+    const hasPostProcessing = showBloom || showVignette || showGodRays
+    if (autoAdaptiveQuality && hasPostProcessing) {
       fpsMonitor.addSample(newFPS)
       const avgFPS = fpsMonitor.getAverageFPS()
 
@@ -93,7 +96,7 @@ export default function Home() {
         setCurrentPreset(manualPreset)
       }
     }
-  }, [autoAdaptiveQuality, showPostProcessing, fpsMonitor, currentPreset, manualPreset])
+  }, [autoAdaptiveQuality, showBloom, showVignette, showGodRays, fpsMonitor, currentPreset, manualPreset])
 
   // Fullscreen toggle
   const toggleFullscreen = useCallback(() => {
@@ -232,7 +235,9 @@ export default function Home() {
           highs={audioState.highs}
           beatDetected={audioState.beatDetected}
           isPlaying={audioState.isPlaying}
-          showPostProcessing={showPostProcessing}
+          showBloom={showBloom}
+          showVignette={showVignette}
+          showGodRays={showGodRays}
           showParticles={showParticles}
           showFPS={showFPS}
           onFPSUpdate={handleFPSUpdate}
@@ -261,8 +266,12 @@ export default function Home() {
             onVolumeChange={handleVolumeChange}
             showFPS={showFPS}
             onToggleFPS={() => setShowFPS(!showFPS)}
-            showPostProcessing={showPostProcessing}
-            onTogglePostProcessing={() => setShowPostProcessing(!showPostProcessing)}
+            showBloom={showBloom}
+            onToggleBloom={() => setShowBloom(!showBloom)}
+            showVignette={showVignette}
+            onToggleVignette={() => setShowVignette(!showVignette)}
+            showGodRays={showGodRays}
+            onToggleGodRays={() => setShowGodRays(!showGodRays)}
             showParticles={showParticles}
             onToggleParticles={() => setShowParticles(!showParticles)}
             isFullscreen={isFullscreen}

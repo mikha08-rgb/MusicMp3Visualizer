@@ -8,8 +8,12 @@ interface ControlsPanelProps {
   onVolumeChange: (volume: number) => void
   showFPS?: boolean
   onToggleFPS?: () => void
-  showPostProcessing?: boolean
-  onTogglePostProcessing?: () => void
+  showBloom?: boolean
+  onToggleBloom?: () => void
+  showVignette?: boolean
+  onToggleVignette?: () => void
+  showGodRays?: boolean
+  onToggleGodRays?: () => void
   showParticles?: boolean
   onToggleParticles?: () => void
   isFullscreen?: boolean
@@ -21,8 +25,12 @@ export default function ControlsPanel({
   onVolumeChange,
   showFPS = false,
   onToggleFPS,
-  showPostProcessing = true,
-  onTogglePostProcessing,
+  showBloom = true,
+  onToggleBloom,
+  showVignette = true,
+  onToggleVignette,
+  showGodRays = false,
+  onToggleGodRays,
   showParticles = true,
   onToggleParticles,
   isFullscreen = false,
@@ -127,20 +135,56 @@ export default function ControlsPanel({
           <p className="text-[10px] text-white/40 uppercase tracking-wider mb-3">Settings</p>
 
           <div className="space-y-3">
-            {onTogglePostProcessing && (
+            {/* Post-Processing Effects */}
+            <p className="text-[10px] text-white/30 uppercase tracking-wider mt-2 mb-1">Effects</p>
+
+            {onToggleBloom && (
               <label className="flex items-center justify-between cursor-pointer group">
                 <span className="text-xs text-white/70 group-hover:text-white transition-colors">
-                  Post-processing
+                  Bloom
                 </span>
                 <input
                   type="checkbox"
-                  checked={showPostProcessing}
-                  onChange={onTogglePostProcessing}
+                  checked={showBloom}
+                  onChange={onToggleBloom}
                   className="w-4 h-4 rounded bg-white/10 border border-white/20
                     checked:bg-blue-500 checked:border-blue-500 cursor-pointer"
                 />
               </label>
             )}
+
+            {onToggleVignette && (
+              <label className="flex items-center justify-between cursor-pointer group">
+                <span className="text-xs text-white/70 group-hover:text-white transition-colors">
+                  Vignette
+                </span>
+                <input
+                  type="checkbox"
+                  checked={showVignette}
+                  onChange={onToggleVignette}
+                  className="w-4 h-4 rounded bg-white/10 border border-white/20
+                    checked:bg-blue-500 checked:border-blue-500 cursor-pointer"
+                />
+              </label>
+            )}
+
+            {onToggleGodRays && (
+              <label className="flex items-center justify-between cursor-pointer group">
+                <span className="text-xs text-white/70 group-hover:text-white transition-colors">
+                  God Rays
+                </span>
+                <input
+                  type="checkbox"
+                  checked={showGodRays}
+                  onChange={onToggleGodRays}
+                  className="w-4 h-4 rounded bg-white/10 border border-white/20
+                    checked:bg-blue-500 checked:border-blue-500 cursor-pointer"
+                />
+              </label>
+            )}
+
+            {/* Other Settings */}
+            <p className="text-[10px] text-white/30 uppercase tracking-wider mt-3 mb-1">Other</p>
 
             {onToggleParticles && (
               <label className="flex items-center justify-between cursor-pointer group">

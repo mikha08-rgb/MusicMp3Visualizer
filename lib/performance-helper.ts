@@ -11,8 +11,7 @@ export interface PostProcessingQuality {
   godRaysEnabled: boolean
   godRaysSamples: number
   vignetteEnabled: boolean
-  chromaticAberrationEnabled: boolean
-  chromaticAberrationIntensity: number
+  vignetteDarkness: number
 }
 
 /**
@@ -28,8 +27,7 @@ export function getPostProcessingQuality(preset: PerformancePreset): PostProcess
         godRaysEnabled: true,
         godRaysSamples: 60,
         vignetteEnabled: true,
-        chromaticAberrationEnabled: true,
-        chromaticAberrationIntensity: 1.0
+        vignetteDarkness: 0.5
       }
 
     case 'high':
@@ -40,8 +38,7 @@ export function getPostProcessingQuality(preset: PerformancePreset): PostProcess
         godRaysEnabled: false, // God rays are expensive
         godRaysSamples: 40,
         vignetteEnabled: true,
-        chromaticAberrationEnabled: true,
-        chromaticAberrationIntensity: 1.0
+        vignetteDarkness: 0.4
       }
 
     case 'medium':
@@ -52,8 +49,7 @@ export function getPostProcessingQuality(preset: PerformancePreset): PostProcess
         godRaysEnabled: false,
         godRaysSamples: 30,
         vignetteEnabled: true,
-        chromaticAberrationEnabled: true,
-        chromaticAberrationIntensity: 0.7
+        vignetteDarkness: 0.3
       }
 
     case 'low':
@@ -64,8 +60,7 @@ export function getPostProcessingQuality(preset: PerformancePreset): PostProcess
         godRaysEnabled: false,
         godRaysSamples: 20,
         vignetteEnabled: true,
-        chromaticAberrationEnabled: false, // Disable chromatic aberration
-        chromaticAberrationIntensity: 0.5
+        vignetteDarkness: 0.2
       }
 
     case 'potato':
@@ -76,8 +71,7 @@ export function getPostProcessingQuality(preset: PerformancePreset): PostProcess
         godRaysEnabled: false,
         godRaysSamples: 10,
         vignetteEnabled: false, // Minimal effects
-        chromaticAberrationEnabled: false,
-        chromaticAberrationIntensity: 0
+        vignetteDarkness: 0.1
       }
   }
 }
