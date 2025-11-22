@@ -26,16 +26,15 @@ import ReflectivePuddles from './environment/ReflectivePuddles'
 import DistantBackdrop from './environment/DistantBackdrop'
 import LightTrails from './environment/LightTrails'
 import CircuitBoard from './environment/CircuitBoard'
-import LightCycles from './environment/LightCycles'
-import Recognizers from './environment/Recognizers'
-import DataStreams from './environment/DataStreams'
-import EnergyBarriers from './environment/EnergyBarriers'
-import FloatingDiagnostics from './ui/FloatingDiagnostics'
-import TronHUD from './ui/TronHUD'
+import DataColumns from './environment/DataColumns'
+import GridPulses from './environment/GridPulses'
 import DynamicCamera from './effects/DynamicCamera'
 import ScreenFlash from './effects/ScreenFlash'
 import ParticleExplosions from './effects/ParticleExplosions'
 import StrobeLights from './effects/StrobeLights'
+import DiagnosticPanels from './ui/DiagnosticPanels'
+import ScanningRings from './ui/ScanningRings'
+import CoordinateMarkers from './ui/CoordinateMarkers'
 import type { ColorTheme } from '@/lib/themes'
 import { getPostProcessingQuality, type PerformancePreset } from '@/lib/performance-helper'
 import { AnimationManager } from '@/lib/AnimationManager'
@@ -114,21 +113,21 @@ function Lights({ theme, bass, mainLightRef }: { theme?: ColorTheme; bass: numbe
 
   useFrame(() => {
     if (light1Ref.current && light2Ref.current && light3Ref.current) {
-      // Very subtle light pulse with bass
-      const intensity = 0.6 + bass * 0.3 // Reduced from 1 + bass * 2
+      // Lights pulse with bass
+      const intensity = 1 + bass * 2
       light1Ref.current.intensity = intensity
-      light2Ref.current.intensity = intensity * 0.5 // Reduced from 0.7
-      light3Ref.current.intensity = intensity * 0.5 // Reduced from 0.7
+      light2Ref.current.intensity = intensity * 0.7
+      light3Ref.current.intensity = intensity * 0.7
     }
   })
 
   return (
     <>
-      <ambientLight intensity={0.15} />
+      <ambientLight intensity={0.2} />
       <pointLight
         ref={light1Ref}
         position={[0, 25, 0]}
-        intensity={0.6}
+        intensity={1}
         color={theme?.colors.orb || '#ffffff'}
         distance={100}
         decay={2}
@@ -136,7 +135,7 @@ function Lights({ theme, bass, mainLightRef }: { theme?: ColorTheme; bass: numbe
       <pointLight
         ref={light2Ref}
         position={[30, 15, 30]}
-        intensity={0.4}
+        intensity={0.7}
         color={theme?.colors.primary || '#00ffff'}
         distance={80}
         decay={2}
@@ -144,7 +143,7 @@ function Lights({ theme, bass, mainLightRef }: { theme?: ColorTheme; bass: numbe
       <pointLight
         ref={light3Ref}
         position={[-30, 15, -30]}
-        intensity={0.4}
+        intensity={0.7}
         color={theme?.colors.secondary || '#ff00ff'}
         distance={80}
         decay={2}
@@ -176,8 +175,8 @@ function EnhancedPostProcessing({
         {/* Enhanced bloom for neon glow with bass reactivity - adaptive quality */}
         {showBloom && (
           <Bloom
-            intensity={quality.bloomIntensity * 0.4} // Drastically reduced - was too bright
-            luminanceThreshold={0.9} // Increased threshold - only brightest things glow
+            intensity={quality.bloomIntensity + bass * 0.5} // Moderate reactivity - not too much
+            luminanceThreshold={quality.bloomLuminanceThreshold}
             luminanceSmoothing={0.9}
             mipmapBlur
           />
@@ -260,10 +259,8 @@ export default function MusicVisualizerScene({
               intensity={0.2}
             />
           )}
-          {false && ( // ScreenFlash disabled - too overwhelming
-            <ScreenFlash bass={bass} beatDetected={beatDetected} theme={theme} />
-          )}
-          {false && showParticles && ( // ParticleExplosions disabled - too much flashing
+          <ScreenFlash bass={bass} beatDetected={beatDetected} theme={theme} />
+          {showParticles && (
             <ParticleExplosions bass={bass} beatDetected={beatDetected} theme={theme} />
           )}
           {false && ( // StrobeLights disabled - too much going on
@@ -279,24 +276,14 @@ export default function MusicVisualizerScene({
           {/* Distant Background - Ultra-lightweight 2D backdrop */}
           <DistantBackdrop bass={bass} theme={theme} />
 
-          {/* Tron Elements */}
+          {/* Tron-style Light Trails */}
           <LightTrails bass={bass} mids={mids} theme={theme} />
-          <LightCycles bass={bass} mids={mids} beatDetected={beatDetected} theme={theme} />
-          <Recognizers bass={bass} mids={mids} beatDetected={beatDetected} theme={theme} />
-          <DataStreams bass={bass} mids={mids} theme={theme} />
-          <EnergyBarriers bass={bass} mids={mids} theme={theme} />
-          <TronHUD bass={bass} mids={mids} theme={theme} />
-          <FloatingDiagnostics
-            bass={bass}
-            mids={mids}
-            highs={highs}
-            frequencyData={frequencyData}
-            theme={theme}
-          />
 
           {/* Ground Layer - Foundation */}
           <CyberpunkGrid bass={bass} theme={theme} />
           <CircuitBoard bass={bass} mids={mids} theme={theme} />
+          <DataColumns bass={bass} mids={mids} theme={theme} />
+          <GridPulses bass={bass} beatDetected={beatDetected} theme={theme} />
           <ReflectivePuddles bass={bass} mids={mids} theme={theme} />
 
           {/* City Buildings */}
@@ -389,6 +376,17 @@ export default function MusicVisualizerScene({
               theme={theme}
             />
           )}
+
+          {/* Tron UI/HUD Overlays */}
+          <DiagnosticPanels
+            bass={bass}
+            mids={mids}
+            highs={highs}
+            frequencyData={frequencyData}
+            theme={theme}
+          />
+          <ScanningRings bass={bass} mids={mids} theme={theme} />
+          <CoordinateMarkers bass={bass} mids={mids} theme={theme} />
 
           {/* OrbitControls re-enabled - smoother, less distracting */}
           <OrbitControls

@@ -22,82 +22,91 @@ export default function CircuitBoard({ bass, mids, theme }: CircuitBoardProps) {
 
   // Generate multi-level circuit traces (lines connecting nodes)
   const circuitTraces = useMemo(() => {
-    const traces: { start: THREE.Vector3; end: THREE.Vector3; color: string; layer: number }[] = []
+    const traces: { start: THREE.Vector3; end: THREE.Vector3; color: string; level: number }[] = []
     const gridSize = 8
     const spacing = 10
-    const layers = [
-      { height: 0.1, density: 0.3, color1: primaryColor, color2: tertiaryColor },
-      { height: 1.5, density: 0.5, color1: tertiaryColor, color2: secondaryColor },
-      { height: 3.0, density: 0.6, color1: secondaryColor, color2: primaryColor },
-    ]
+    const levels = [0.1, 1.5, 3.0] // Ground, mid, high
 
-    // Create circuit traces for each layer
-    layers.forEach((layer, layerIndex) => {
+    levels.forEach((level, levelIndex) => {
+      // Create a grid of circuit traces for each level
       for (let i = 0; i < gridSize; i++) {
         for (let j = 0; j < gridSize; j++) {
           const x = (i - gridSize / 2) * spacing
           const z = (j - gridSize / 2) * spacing
 
           // Horizontal traces
-          if (Math.random() > layer.density && i < gridSize - 1) {
+          if (Math.random() > 0.3 && i < gridSize - 1) {
             traces.push({
-              start: new THREE.Vector3(x, layer.height, z),
-              end: new THREE.Vector3(x + spacing, layer.height, z),
-              color: Math.random() > 0.5 ? layer.color1 : layer.color2,
-              layer: layerIndex,
+              start: new THREE.Vector3(x, level, z),
+              end: new THREE.Vector3(x + spacing, level, z),
+              color: Math.random() > 0.5 ? primaryColor : tertiaryColor,
+              level: levelIndex,
             })
           }
 
           // Vertical traces
-          if (Math.random() > layer.density && j < gridSize - 1) {
+          if (Math.random() > 0.3 && j < gridSize - 1) {
             traces.push({
-              start: new THREE.Vector3(x, layer.height, z),
-              end: new THREE.Vector3(x, layer.height, z + spacing),
-              color: Math.random() > 0.5 ? layer.color1 : layer.color2,
-              layer: layerIndex,
+              start: new THREE.Vector3(x, level, z),
+              end: new THREE.Vector3(x, level, z + spacing),
+              color: Math.random() > 0.5 ? primaryColor : tertiaryColor,
+              level: levelIndex,
             })
           }
 
-          // Diagonal traces (for complexity)
+          // Diagonal traces for complexity (fewer of these)
           if (Math.random() > 0.7 && i < gridSize - 1 && j < gridSize - 1) {
             traces.push({
-              start: new THREE.Vector3(x, layer.height, z),
-              end: new THREE.Vector3(x + spacing, layer.height, z + spacing),
-              color: layer.color2,
-              layer: layerIndex,
-            })
-          }
-
-          // Vertical connections between layers
-          if (layerIndex < layers.length - 1 && Math.random() > 0.8) {
-            traces.push({
-              start: new THREE.Vector3(x, layer.height, z),
-              end: new THREE.Vector3(x, layers[layerIndex + 1].height, z),
-              color: tertiaryColor,
-              layer: layerIndex,
+              start: new THREE.Vector3(x, level, z),
+              end: new THREE.Vector3(x + spacing, level, z + spacing),
+              color: secondaryColor,
+              level: levelIndex,
             })
           }
         }
       }
     })
 
+    // Add vertical connections between levels
+    const connectionCount = 12
+    for (let i = 0; i < connectionCount; i++) {
+      const x = (Math.random() - 0.5) * spacing * gridSize * 0.8
+      const z = (Math.random() - 0.5) * spacing * gridSize * 0.8
+
+      // Connect ground to mid
+      traces.push({
+        start: new THREE.Vector3(x, 0.1, z),
+        end: new THREE.Vector3(x, 1.5, z),
+        color: primaryColor,
+        level: -1, // Special level for vertical connections
+      })
+
+      // Connect mid to high
+      traces.push({
+        start: new THREE.Vector3(x, 1.5, z),
+        end: new THREE.Vector3(x, 3.0, z),
+        color: tertiaryColor,
+        level: -1,
+      })
+    }
+
     return traces
   }, [primaryColor, secondaryColor, tertiaryColor])
 
-  // Generate connection nodes (circuit junctions) - multi-level
+  // Generate connection nodes (circuit junctions) across all levels
   const nodePositions = useMemo(() => {
     const positions: THREE.Vector3[] = []
     const gridSize = 8
     const spacing = 10
-    const heights = [0.2, 1.6, 3.1] // Slightly above each trace layer
+    const levels = [0.2, 1.7, 3.2] // Slightly above circuit traces
 
-    heights.forEach((height) => {
+    levels.forEach((level) => {
       for (let i = 0; i < gridSize; i++) {
         for (let j = 0; j < gridSize; j++) {
           if (Math.random() > 0.5) {
             const x = (i - gridSize / 2) * spacing
             const z = (j - gridSize / 2) * spacing
-            positions.push(new THREE.Vector3(x, height, z))
+            positions.push(new THREE.Vector3(x, level, z))
           }
         }
       }
@@ -107,7 +116,7 @@ export default function CircuitBoard({ bass, mids, theme }: CircuitBoardProps) {
   }, [])
 
   const nodeCount = nodePositions.length
-  const dataPacketCount = 40 // Increased for multi-layer circuits
+  const dataPacketCount = 40 // Doubled for multi-level routing
 
   // Temporary objects for matrix updates
   const tempObject = useMemo(() => new THREE.Object3D(), [])
@@ -152,7 +161,7 @@ export default function CircuitBoard({ bass, mids, theme }: CircuitBoardProps) {
       const pos = new THREE.Vector3().lerpVectors(trace.start, trace.end, t)
 
       tempObject.position.copy(pos)
-      tempObject.position.y += 0.15 // Slightly above circuit traces
+      tempObject.position.y = 0.3 // Slightly above circuit traces
       tempObject.scale.setScalar(0.3 + bass * 0.2)
       tempObject.updateMatrix()
 
@@ -180,7 +189,7 @@ export default function CircuitBoard({ bass, mids, theme }: CircuitBoardProps) {
 
   return (
     <group ref={circuitGroupRef} position={[0, 0, 0]}>
-      {/* Circuit traces (lines) */}
+      {/* Circuit traces (lines) - all levels */}
       {circuitTraces.map((trace, index) => (
         <CircuitTrace
           key={`trace-${index}`}
@@ -188,6 +197,7 @@ export default function CircuitBoard({ bass, mids, theme }: CircuitBoardProps) {
           end={trace.end}
           color={trace.color}
           bass={bass}
+          isVertical={trace.level === -1}
         />
       ))}
 
@@ -195,11 +205,11 @@ export default function CircuitBoard({ bass, mids, theme }: CircuitBoardProps) {
       <instancedMesh ref={nodesRef} args={[undefined, undefined, nodeCount]}>
         <sphereGeometry args={[0.3, 8, 8]} />
         <meshStandardMaterial
-          color={primaryColor}
+          color="white"
           emissive={primaryColor}
-          emissiveIntensity={0.8}
+          emissiveIntensity={3}
           transparent
-          opacity={0.6}
+          opacity={0.9}
         />
       </instancedMesh>
 
@@ -207,11 +217,11 @@ export default function CircuitBoard({ bass, mids, theme }: CircuitBoardProps) {
       <instancedMesh ref={dataPacketsRef} args={[undefined, undefined, dataPacketCount]}>
         <sphereGeometry args={[0.2, 6, 6]} />
         <meshStandardMaterial
-          color={tertiaryColor}
+          color="white"
           emissive={tertiaryColor}
-          emissiveIntensity={1}
+          emissiveIntensity={4}
           transparent
-          opacity={0.7}
+          opacity={0.95}
         />
       </instancedMesh>
     </group>
@@ -224,11 +234,13 @@ function CircuitTrace({
   end,
   color,
   bass,
+  isVertical = false,
 }: {
   start: THREE.Vector3
   end: THREE.Vector3
   color: string
   bass: number
+  isVertical?: boolean
 }) {
   const traceRef = useRef<THREE.Mesh>(null)
 
@@ -239,20 +251,20 @@ function CircuitTrace({
   useFrame(() => {
     if (!traceRef.current) return
 
-    // Pulse with bass
+    // Pulse with bass - vertical connections pulse more
     const material = traceRef.current.material as THREE.MeshStandardMaterial
-    material.emissiveIntensity = 2 + bass * 2
+    material.emissiveIntensity = isVertical ? 2.5 + bass * 3 : 2 + bass * 2
   })
 
   return (
     <mesh ref={traceRef}>
-      <tubeGeometry args={[tracePath, 2, 0.05, 4, false]} />
+      <tubeGeometry args={[tracePath, 2, isVertical ? 0.06 : 0.05, 4, false]} />
       <meshStandardMaterial
         color={color}
         emissive={color}
-        emissiveIntensity={2}
+        emissiveIntensity={isVertical ? 2.5 : 2}
         transparent
-        opacity={0.8}
+        opacity={isVertical ? 0.9 : 0.8}
       />
     </mesh>
   )
