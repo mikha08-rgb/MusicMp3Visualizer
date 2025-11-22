@@ -1,0 +1,8 @@
+{
+  "marketplaces": [
+    "https://github.com/JNLei/claude-tools.git"
+  ],
+  "plugins": [
+    "next-project-starter@claude-tools"
+  ]
+}
