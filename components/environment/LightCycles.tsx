@@ -103,11 +103,11 @@ function LightCycle({
     // Face direction of movement
     cycleRef.current.rotation.y = angle + Math.PI / 2
 
-    // Very subtle pulse intensity with bass
+    // Very subtle pulse intensity with bass - uniform for all parts
     cycleRef.current.traverse((child) => {
       if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
-        const baseIntensity = child === lightBar1 || child === lightBar2 ? 2 : 1.5
-        child.material.emissiveIntensity = baseIntensity * (1 + bass * 0.1) // Reduced from 0.3 to 0.1
+        // No pulsing - keep materials at their base emissive intensity
+        // This prevents flashing while maintaining the glow
       }
     })
 
