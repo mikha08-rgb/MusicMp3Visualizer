@@ -1,8 +1,9 @@
 'use client'
 
-import { useRef, useMemo } from 'react'
+import { useRef, useMemo, memo, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
+import type { ColorTheme } from '@/lib/themes'
 
 interface LayeredRingsProps {
   bass: number
@@ -11,50 +12,40 @@ interface LayeredRingsProps {
   frequencyData: Uint8Array
   beatDetected: boolean
   isPlaying: boolean
+  showParticles?: boolean
+  theme?: ColorTheme
 }
 
-function FrequencyBar({
-  position,
-  rotation,
-  scale,
-  color
-}: {
-  position: [number, number, number]
-  rotation: [number, number, number]
-  scale: [number, number, number]
-  color: THREE.Color
-}) {
-  return (
-    <mesh position={position} rotation={rotation} scale={scale}>
-      <boxGeometry args={[0.3, 1, 0.3]} />
-      <meshStandardMaterial
-        color={color}
-        emissive={color}
-        emissiveIntensity={0.5}
-        toneMapped={false}
-      />
-    </mesh>
-  )
-}
-
+// Optimized Ring using InstancedMesh for massive performance improvement
 function Ring({
   radius,
   barCount,
   frequencySlice,
   colorHueShift,
   rotationSpeed,
+  baseColor,
 }: {
   radius: number
   barCount: number
   frequencySlice: Uint8Array
   colorHueShift: number
   rotationSpeed: number
+  baseColor?: string
 }) {
   const groupRef = useRef<THREE.Group>(null)
+  const instancedMeshRef = useRef<THREE.InstancedMesh>(null)
 
-  const bars = useMemo(() => {
-    const barsData = []
+  // Store scale values for smooth interpolation
+  const scalesRef = useRef<Float32Array>(new Float32Array(barCount))
+
+  // Temporary objects for matrix calculations
+  const tempObject = useMemo(() => new THREE.Object3D(), [])
+  const tempColor = useMemo(() => new THREE.Color(), [])
+
+  // Create instance data once
+  const instanceData = useMemo(() => {
     const angleStep = (Math.PI * 2) / barCount
+    const data = []
 
     for (let i = 0; i < barCount; i++) {
       const angle = i * angleStep
@@ -63,21 +54,45 @@ function Ring({
 
       const t = i / barCount
       const hue = (t + colorHueShift) % 1
-      const color = new THREE.Color().setHSL(hue, 0.8, 0.5)
 
-      barsData.push({
-        position: [x, 0, z] as [number, number, number],
-        rotation: [0, -angle, 0] as [number, number, number],
+      // Create vibrant color
+      const color = baseColor
+        ? new THREE.Color(baseColor)
+        : new THREE.Color().setHSL(hue, 0.9, 0.7)
+
+      data.push({
+        position: new THREE.Vector3(x, 0, z),
+        rotation: new THREE.Euler(0, -angle, 0),
+        hue,
         color,
-        index: i,
       })
     }
 
-    return barsData
-  }, [barCount, radius, colorHueShift])
+    return data
+  }, [barCount, radius, colorHueShift, baseColor])
+
+  // Initialize instance matrices and colors
+  useEffect(() => {
+    if (!instancedMeshRef.current) return
+
+    instanceData.forEach((data, i) => {
+      tempObject.position.copy(data.position)
+      tempObject.rotation.copy(data.rotation)
+      tempObject.scale.set(1, 1, 1)
+      tempObject.updateMatrix()
+
+      instancedMeshRef.current!.setMatrixAt(i, tempObject.matrix)
+      instancedMeshRef.current!.setColorAt(i, data.color)
+    })
+
+    instancedMeshRef.current.instanceMatrix.needsUpdate = true
+    if (instancedMeshRef.current.instanceColor) {
+      instancedMeshRef.current.instanceColor.needsUpdate = true
+    }
+  }, [instanceData, tempObject])
 
   useFrame((state, delta) => {
-    if (!groupRef.current) return
+    if (!groupRef.current || !instancedMeshRef.current) return
 
     // Rotate the ring
     if (rotationSpeed !== 0) {
@@ -85,39 +100,61 @@ function Ring({
     }
 
     // Update bar heights based on frequency data
-    groupRef.current.children.forEach((child, index) => {
-      if (child instanceof THREE.Mesh) {
-        const dataIndex = Math.floor((index / barCount) * frequencySlice.length)
-        const frequencyValue = frequencySlice[dataIndex] || 0
+    let needsUpdate = false
 
-        // Normalize frequency value to scale
-        const targetScale = 0.5 + (frequencyValue / 255) * 4.5
+    for (let i = 0; i < barCount; i++) {
+      const dataIndex = Math.floor((i / barCount) * frequencySlice.length)
+      const frequencyValue = frequencySlice[dataIndex] || 0
 
-        // Smooth transition
-        child.scale.y = THREE.MathUtils.lerp(child.scale.y, targetScale, 0.3)
+      // Normalize frequency value to scale
+      const targetScale = 0.5 + (frequencyValue / 255) * 4.5
 
-        // Position bars so they grow upward from the ground
-        child.position.y = child.scale.y / 2
-      }
-    })
+      // Smooth transition
+      const currentScale = scalesRef.current[i] || 1
+      const newScale = THREE.MathUtils.lerp(currentScale, targetScale, 0.3)
+      scalesRef.current[i] = newScale
+
+      // Update instance matrix
+      const data = instanceData[i]
+      tempObject.position.copy(data.position)
+      tempObject.position.y = newScale / 2
+      tempObject.rotation.copy(data.rotation)
+      tempObject.scale.set(1, newScale, 1)
+      tempObject.updateMatrix()
+
+      instancedMeshRef.current.setMatrixAt(i, tempObject.matrix)
+      needsUpdate = true
+    }
+
+    if (needsUpdate) {
+      instancedMeshRef.current.instanceMatrix.needsUpdate = true
+    }
   })
 
   return (
     <group ref={groupRef}>
-      {bars.map((bar, index) => (
-        <FrequencyBar
-          key={index}
-          position={bar.position}
-          rotation={bar.rotation}
-          scale={[1, 1, 1]}
-          color={bar.color}
+      <instancedMesh ref={instancedMeshRef} args={[undefined, undefined, barCount]}>
+        <boxGeometry args={[0.3, 1, 0.3]} />
+        <meshBasicMaterial
+          color="white"
+          toneMapped={false}
         />
-      ))}
+      </instancedMesh>
     </group>
   )
 }
 
-function CentralOrb({ bass, beatDetected }: { bass: number; beatDetected: boolean }) {
+const CentralOrb = memo(function CentralOrb({
+  bass,
+  beatDetected,
+  color = '#ff6b6b',
+  emissiveColor = '#ff3333'
+}: {
+  bass: number
+  beatDetected: boolean
+  color?: string
+  emissiveColor?: string
+}) {
   const meshRef = useRef<THREE.Mesh>(null)
 
   useFrame((state, delta) => {
@@ -133,15 +170,15 @@ function CentralOrb({ bass, beatDetected }: { bass: number; beatDetected: boolea
     meshRef.current.rotation.y += delta * 0.5
     meshRef.current.rotation.x += delta * 0.3
 
-    // Beat flash
+    // Beat flash - reduced intensity
     const material = meshRef.current.material as THREE.MeshStandardMaterial
     if (beatDetected) {
-      material.emissiveIntensity = 2.0
+      material.emissiveIntensity = 1.2
     } else {
       material.emissiveIntensity = THREE.MathUtils.lerp(
         material.emissiveIntensity,
-        0.8,
-        0.1
+        0.6,
+        0.15
       )
     }
   })
@@ -150,8 +187,8 @@ function CentralOrb({ bass, beatDetected }: { bass: number; beatDetected: boolea
     <mesh ref={meshRef}>
       <sphereGeometry args={[1.5, 32, 32]} />
       <meshStandardMaterial
-        color="#ff6b6b"
-        emissive="#ff3333"
+        color={color}
+        emissive={emissiveColor}
         emissiveIntensity={0.8}
         roughness={0.3}
         metalness={0.7}
@@ -159,53 +196,75 @@ function CentralOrb({ bass, beatDetected }: { bass: number; beatDetected: boolea
       />
     </mesh>
   )
-}
+})
 
-function BackgroundParticles({ highs }: { highs: number }) {
+// Optimized particles using InstancedMesh
+function BackgroundParticles({ highs, color = '#4ecdc4' }: { highs: number; color?: string }) {
   const particleCount = 500
-  const particlesRef = useRef<THREE.Points>(null)
+  const instancedMeshRef = useRef<THREE.InstancedMesh>(null)
+  const groupRef = useRef<THREE.Group>(null)
 
-  const positions = useMemo(() => {
-    const pos = new Float32Array(particleCount * 3)
+  const tempObject = useMemo(() => new THREE.Object3D(), [])
+  const tempColor = useMemo(() => new THREE.Color(color), [color])
+
+  // Initialize particle positions once
+  const particlePositions = useMemo(() => {
+    const positions = []
     for (let i = 0; i < particleCount; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 50
-      pos[i * 3 + 1] = (Math.random() - 0.5) * 30
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 50
+      positions.push(new THREE.Vector3(
+        (Math.random() - 0.5) * 50,
+        (Math.random() - 0.5) * 30,
+        (Math.random() - 0.5) * 50
+      ))
     }
-    return pos
+    return positions
   }, [])
 
-  useFrame((state, delta) => {
-    if (!particlesRef.current) return
+  // Initialize instances
+  useEffect(() => {
+    if (!instancedMeshRef.current) return
 
-    particlesRef.current.rotation.y += delta * 0.05
+    particlePositions.forEach((position, i) => {
+      tempObject.position.copy(position)
+      tempObject.scale.setScalar(0.08)
+      tempObject.updateMatrix()
+
+      instancedMeshRef.current!.setMatrixAt(i, tempObject.matrix)
+      instancedMeshRef.current!.setColorAt(i, tempColor)
+    })
+
+    instancedMeshRef.current.instanceMatrix.needsUpdate = true
+    if (instancedMeshRef.current.instanceColor) {
+      instancedMeshRef.current.instanceColor.needsUpdate = true
+    }
+  }, [particlePositions, tempObject, tempColor])
+
+  useFrame((state, delta) => {
+    if (!groupRef.current) return
+
+    groupRef.current.rotation.y += delta * 0.05
 
     // Scale with highs
     const targetScale = 1 + highs * 0.5
-    particlesRef.current.scale.setScalar(
-      THREE.MathUtils.lerp(particlesRef.current.scale.x, targetScale, 0.1)
+    groupRef.current.scale.setScalar(
+      THREE.MathUtils.lerp(groupRef.current.scale.x, targetScale, 0.1)
     )
   })
 
   return (
-    <points ref={particlesRef}>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          count={particleCount}
-          array={positions}
-          itemSize={3}
+    <group ref={groupRef}>
+      <instancedMesh ref={instancedMeshRef} args={[undefined, undefined, particleCount]}>
+        <sphereGeometry args={[1, 4, 4]} />
+        <meshBasicMaterial
+          color={color}
+          transparent
+          opacity={0.4 + highs * 0.4}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          toneMapped={false}
         />
-      </bufferGeometry>
-      <pointsMaterial
-        size={0.08}
-        color="#4ecdc4"
-        transparent
-        opacity={0.4 + highs * 0.4}
-        blending={THREE.AdditiveBlending}
-        depthWrite={false}
-      />
-    </points>
+      </instancedMesh>
+    </group>
   )
 }
 
@@ -215,7 +274,9 @@ export default function LayeredRings({
   highs,
   frequencyData,
   beatDetected,
-  isPlaying
+  isPlaying,
+  showParticles = true,
+  theme
 }: LayeredRingsProps) {
   // Split frequency data for different rings
   const bassData = useMemo(() => {
@@ -236,10 +297,20 @@ export default function LayeredRings({
   return (
     <group>
       {/* Background particles */}
-      <BackgroundParticles highs={highs} />
+      {showParticles && (
+        <BackgroundParticles
+          highs={highs}
+          color={theme?.colors.particles}
+        />
+      )}
 
       {/* Central orb */}
-      <CentralOrb bass={bass} beatDetected={beatDetected} />
+      <CentralOrb
+        bass={bass}
+        beatDetected={beatDetected}
+        color={theme?.colors.orb}
+        emissiveColor={theme?.colors.orbEmissive}
+      />
 
       {/* Inner ring - bass frequencies */}
       <Ring
@@ -248,6 +319,7 @@ export default function LayeredRings({
         frequencySlice={bassData}
         colorHueShift={0}
         rotationSpeed={isPlaying ? 0.1 : 0}
+        baseColor={theme?.colors.primary}
       />
 
       {/* Middle ring - mid frequencies */}
@@ -257,6 +329,7 @@ export default function LayeredRings({
         frequencySlice={midsData}
         colorHueShift={0.33}
         rotationSpeed={isPlaying ? -0.15 : 0}
+        baseColor={theme?.colors.secondary}
       />
 
       {/* Outer ring - high frequencies */}
@@ -266,6 +339,7 @@ export default function LayeredRings({
         frequencySlice={highsData}
         colorHueShift={0.66}
         rotationSpeed={isPlaying ? 0.08 : 0}
+        baseColor={theme?.colors.tertiary}
       />
     </group>
   )

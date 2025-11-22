@@ -19,6 +19,7 @@ interface AudioAnalyzerControls {
   pause: () => void
   togglePlayPause: () => void
   seek: (time: number) => void
+  setVolume: (volume: number) => void
 }
 
 export function useEnhancedAudioAnalyzer(fftSize: number = 2048) {
@@ -236,6 +237,12 @@ export function useEnhancedAudioAnalyzer(fftSize: number = 2048) {
     setState(prev => ({ ...prev, currentTime: time }))
   }, [])
 
+  // Set volume (0-1)
+  const setVolume = useCallback((volume: number) => {
+    if (!audioElementRef.current) return
+    audioElementRef.current.volume = Math.max(0, Math.min(1, volume))
+  }, [])
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -258,6 +265,7 @@ export function useEnhancedAudioAnalyzer(fftSize: number = 2048) {
     pause,
     togglePlayPause,
     seek,
+    setVolume,
   }
 
   return [state, controls] as const

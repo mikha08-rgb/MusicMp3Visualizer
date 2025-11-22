@@ -2,8 +2,33 @@
 
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Environment } from '@react-three/drei'
-import { Suspense } from 'react'
+import { Suspense, useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import { EffectComposer, Bloom, Vignette, ChromaticAberration } from '@react-three/postprocessing'
+import { BlendFunction } from 'postprocessing'
 import LayeredRings from './visualizations/LayeredRings'
+import type { ColorTheme } from '@/lib/themes'
+
+function FPSCounter({ onFPSUpdate }: { onFPSUpdate?: (fps: number) => void }) {
+  const frameCountRef = useRef(0)
+  const lastTimeRef = useRef(performance.now())
+
+  useFrame(() => {
+    frameCountRef.current++
+
+    const now = performance.now()
+    const delta = now - lastTimeRef.current
+
+    // Update FPS every second
+    if (delta >= 1000 && onFPSUpdate) {
+      onFPSUpdate(Math.round((frameCountRef.current * 1000) / delta))
+      frameCountRef.current = 0
+      lastTimeRef.current = now
+    }
+  })
+
+  return null
+}
 
 interface MusicVisualizerSceneProps {
   frequencyData: Uint8Array
@@ -12,6 +37,11 @@ interface MusicVisualizerSceneProps {
   highs: number
   beatDetected: boolean
   isPlaying: boolean
+  showPostProcessing?: boolean
+  showParticles?: boolean
+  showFPS?: boolean
+  onFPSUpdate?: (fps: number) => void
+  theme?: ColorTheme
 }
 
 function Lights() {
@@ -31,16 +61,28 @@ export default function MusicVisualizerScene({
   mids,
   highs,
   beatDetected,
-  isPlaying
+  isPlaying,
+  showPostProcessing = true,
+  showParticles = true,
+  showFPS = false,
+  onFPSUpdate,
+  theme
 }: MusicVisualizerSceneProps) {
   return (
     <div className="w-full h-full">
       <Canvas
         camera={{ position: [0, 15, 20], fov: 60 }}
         className="bg-gradient-to-b from-black via-slate-900 to-black"
+        gl={{
+          antialias: true,
+          alpha: true
+        }}
       >
         <Suspense fallback={null}>
           <Lights />
+
+          {/* FPS Counter */}
+          {showFPS && <FPSCounter onFPSUpdate={onFPSUpdate} />}
 
           {/* Layered Rings Visualization */}
           <LayeredRings
@@ -50,6 +92,8 @@ export default function MusicVisualizerScene({
             frequencyData={frequencyData}
             beatDetected={beatDetected}
             isPlaying={isPlaying}
+            showParticles={showParticles}
+            theme={theme}
           />
 
           <OrbitControls
@@ -67,6 +111,28 @@ export default function MusicVisualizerScene({
             <planeGeometry args={[100, 100]} />
             <meshStandardMaterial color="#111111" transparent opacity={0.3} />
           </mesh>
+
+          {/* Post-processing effects */}
+          {showPostProcessing && (
+            <EffectComposer>
+              <Bloom
+                intensity={0.3}
+                luminanceThreshold={0.4}
+                luminanceSmoothing={0.9}
+                mipmapBlur
+              />
+              <Vignette
+                offset={0.5}
+                darkness={0.3}
+                eskil={false}
+                blendFunction={BlendFunction.NORMAL}
+              />
+              <ChromaticAberration
+                offset={[0.0001, 0.0001]}
+                blendFunction={BlendFunction.NORMAL}
+              />
+            </EffectComposer>
+          )}
         </Suspense>
       </Canvas>
     </div>
