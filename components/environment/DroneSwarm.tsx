@@ -1,9 +1,10 @@
 'use client'
 
 import { useRef, useMemo, useEffect } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import type { ColorTheme } from '@/lib/themes'
+import { shouldRenderByDistance } from '@/lib/lod-helper'
 
 interface DroneSwarmProps {
   bass: number
@@ -33,6 +34,7 @@ export default function DroneSwarm({
   const lightsRef = useRef<THREE.InstancedMesh>(null)
   const tempObject = useMemo(() => new THREE.Object3D(), [])
   const tempColor = useMemo(() => new THREE.Color(), [])
+  const tempVector = useMemo(() => new THREE.Vector3(), [])
 
   // Generate drone data
   const { droneData, droneCount } = useMemo(() => {
@@ -104,10 +106,12 @@ export default function DroneSwarm({
   }, [droneData, tempObject])
 
   // Animate drones
+  const { camera } = useThree()
   useFrame((state) => {
     if (!dronesRef.current || !lightsRef.current) return
 
     const time = state.clock.elapsedTime
+    const MAX_RENDER_DISTANCE = 120 // Drones are farther away
 
     droneData.forEach((drone, i) => {
       // Orbit around formation center
@@ -129,6 +133,17 @@ export default function DroneSwarm({
       const x = drone.basePosition.x + orbitX + highsScatter + (beatExpand * Math.cos(angle))
       const y = drone.basePosition.y + heightWave + bassBoost
       const z = drone.basePosition.z + orbitZ + (beatExpand * Math.sin(angle))
+
+      // Distance-based culling for performance
+      tempVector.set(x, y, z)
+      if (!shouldRenderByDistance(tempVector, camera, MAX_RENDER_DISTANCE)) {
+        // Hide by scaling to zero
+        tempObject.scale.set(0, 0, 0)
+        tempObject.updateMatrix()
+        dronesRef.current.setMatrixAt(i, tempObject.matrix)
+        lightsRef.current.setMatrixAt(i, tempObject.matrix)
+        return
+      }
 
       // Drone body
       tempObject.position.set(x, y, z)

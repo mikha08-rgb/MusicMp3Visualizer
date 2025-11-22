@@ -23,6 +23,7 @@ import CargoShips from './environment/CargoShips'
 import SkyPlatforms from './environment/SkyPlatforms'
 import ReflectivePuddles from './environment/ReflectivePuddles'
 import type { ColorTheme } from '@/lib/themes'
+import { getPostProcessingQuality, type PerformancePreset } from '@/lib/performance-helper'
 
 function FPSCounter({ onFPSUpdate }: { onFPSUpdate?: (fps: number) => void }) {
   const frameCountRef = useRef(0)
@@ -69,6 +70,7 @@ interface MusicVisualizerSceneProps {
   theme?: ColorTheme
   visualizationMode?: 'rings' | 'spectrum'
   showGodRays?: boolean
+  performancePreset?: PerformancePreset
 }
 
 function Lights({ theme, bass, mainLightRef }: { theme?: ColorTheme; bass: number; mainLightRef?: React.RefObject<THREE.PointLight> }) {
@@ -117,26 +119,38 @@ function Lights({ theme, bass, mainLightRef }: { theme?: ColorTheme; bass: numbe
   )
 }
 
-function EnhancedPostProcessing({ bass, lightRef, showGodRays }: { bass: number; lightRef: React.RefObject<THREE.PointLight>; showGodRays?: boolean }) {
+function EnhancedPostProcessing({
+  bass,
+  lightRef,
+  showGodRays,
+  preset = 'high'
+}: {
+  bass: number
+  lightRef: React.RefObject<THREE.PointLight>
+  showGodRays?: boolean
+  preset?: PerformancePreset
+}) {
+  const quality = useMemo(() => getPostProcessingQuality(preset), [preset])
+
   return (
     <EffectComposer multisampling={0}>
-      {/* Enhanced bloom for neon glow with bass reactivity */}
+      {/* Enhanced bloom for neon glow with bass reactivity - adaptive quality */}
       <Bloom
-        intensity={1.2 + bass * 0.3}
-        luminanceThreshold={0.2}
+        intensity={quality.bloomIntensity + bass * 0.3}
+        luminanceThreshold={quality.bloomLuminanceThreshold}
         luminanceSmoothing={0.9}
         mipmapBlur
       />
 
       {/* God rays from main light source - optional for performance */}
-      {showGodRays && lightRef.current && (
+      {quality.godRaysEnabled && showGodRays && lightRef.current && (
         <GodRays
           sun={lightRef.current}
           exposure={0.15}
           decay={0.95}
           density={0.7}
           weight={0.5}
-          samples={40}
+          samples={quality.godRaysSamples}
           clampMax={1}
           blur={true}
           kernelSize={KernelSize.SMALL}
@@ -144,19 +158,26 @@ function EnhancedPostProcessing({ bass, lightRef, showGodRays }: { bass: number;
         />
       )}
 
-      {/* Vignette for cinematic focus */}
-      <Vignette
-        offset={0.2}
-        darkness={0.7}
-        eskil={false}
-        blendFunction={BlendFunction.NORMAL}
-      />
+      {/* Vignette for cinematic focus - can be disabled for performance */}
+      {quality.vignetteEnabled && (
+        <Vignette
+          offset={0.2}
+          darkness={0.7}
+          eskil={false}
+          blendFunction={BlendFunction.NORMAL}
+        />
+      )}
 
-      {/* Subtle chromatic aberration for cyberpunk feel */}
-      <ChromaticAberration
-        offset={[0.0015 + bass * 0.0005, 0.0015 + bass * 0.0005]}
-        blendFunction={BlendFunction.NORMAL}
-      />
+      {/* Subtle chromatic aberration for cyberpunk feel - adaptive intensity */}
+      {quality.chromaticAberrationEnabled && (
+        <ChromaticAberration
+          offset={[
+            (0.0015 + bass * 0.0005) * quality.chromaticAberrationIntensity,
+            (0.0015 + bass * 0.0005) * quality.chromaticAberrationIntensity
+          ]}
+          blendFunction={BlendFunction.NORMAL}
+        />
+      )}
     </EffectComposer>
   )
 }
@@ -174,7 +195,8 @@ export default function MusicVisualizerScene({
   onFPSUpdate,
   theme,
   visualizationMode = 'rings',
-  showGodRays = false
+  showGodRays = false,
+  performancePreset = 'high'
 }: MusicVisualizerSceneProps) {
   const mainLightRef = useRef<THREE.PointLight>(null)
 
@@ -313,7 +335,14 @@ export default function MusicVisualizerScene({
           <Environment preset="night" />
 
           {/* Post-processing effects */}
-          {showPostProcessing && <EnhancedPostProcessing bass={bass} lightRef={mainLightRef} showGodRays={showGodRays} />}
+          {showPostProcessing && (
+            <EnhancedPostProcessing
+              bass={bass}
+              lightRef={mainLightRef}
+              showGodRays={showGodRays}
+              preset={performancePreset}
+            />
+          )}
         </Suspense>
       </Canvas>
     </div>

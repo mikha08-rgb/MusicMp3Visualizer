@@ -42,8 +42,9 @@ export function useEnhancedAudioAnalyzer(fftSize: number = 2048) {
   const sourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null)
   const animationFrameRef = useRef<number | null>(null)
 
-  // Beat detection state
-  const beatHistoryRef = useRef<number[]>([])
+  // Beat detection state - optimized history size
+  const beatHistoryRef = useRef<Float32Array>(new Float32Array(30)) // Reduced from 60 to 30 frames
+  const beatHistoryIndex = useRef<number>(0)
   const beatThresholdRef = useRef<number>(0)
   const lastBeatTimeRef = useRef<number>(0)
 
@@ -78,19 +79,22 @@ export function useEnhancedAudioAnalyzer(fftSize: number = 2048) {
     return sum / count / 255 // Normalize to 0-1
   }, [])
 
-  // Simple beat detection algorithm
+  // Simple beat detection algorithm - optimized with typed arrays
   const detectBeat = useCallback((bassLevel: number) => {
     const now = performance.now()
     const minTimeBetweenBeats = 100 // ms (prevents detecting same beat multiple times)
 
-    // Add to history (keep last 60 frames ~1 second at 60fps)
-    beatHistoryRef.current.push(bassLevel)
-    if (beatHistoryRef.current.length > 60) {
-      beatHistoryRef.current.shift()
-    }
+    // Add to circular buffer (30 frames ~0.5 second at 60fps)
+    const historySize = beatHistoryRef.current.length
+    beatHistoryRef.current[beatHistoryIndex.current] = bassLevel
+    beatHistoryIndex.current = (beatHistoryIndex.current + 1) % historySize
 
-    // Calculate average and threshold
-    const average = beatHistoryRef.current.reduce((a, b) => a + b, 0) / beatHistoryRef.current.length
+    // Calculate average and threshold - optimized loop
+    let sum = 0
+    for (let i = 0; i < historySize; i++) {
+      sum += beatHistoryRef.current[i]
+    }
+    const average = sum / historySize
     beatThresholdRef.current = average * 1.4 // Beat must be 40% above average
 
     // Detect beat

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useMemo, useRef } from 'react'
 import { useEnhancedAudioAnalyzer } from '@/hooks/useEnhancedAudioAnalyzer'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import FileUpload from '@/components/FileUpload'
@@ -11,6 +11,7 @@ import ThemePicker from '@/components/ThemePicker'
 import VisualizationModePicker from '@/components/VisualizationModePicker'
 import { FPSDisplay } from '@/components/FPSCounter'
 import { themes, type ColorTheme } from '@/lib/themes'
+import { FPSMonitor, getAutoPreset, type PerformancePreset } from '@/lib/performance-helper'
 
 export default function Home() {
   const [audioState, audioControls] = useEnhancedAudioAnalyzer(2048)
@@ -22,17 +23,24 @@ export default function Home() {
   const [showParticles, setShowParticles] = useLocalStorage('visualizer-particles', true)
   const [savedThemeName, setSavedThemeName] = useLocalStorage('visualizer-theme', 'cyberpunk')
   const [visualizationMode, setVisualizationMode] = useLocalStorage<'rings' | 'spectrum'>('visualizer-mode', 'rings')
+  const [autoAdaptiveQuality, setAutoAdaptiveQuality] = useLocalStorage('visualizer-autoAdaptive', true)
+  const [manualPreset, setManualPreset] = useLocalStorage<PerformancePreset>('visualizer-preset', 'high')
 
   // Non-persisted state
   const [fps, setFps] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [isDraggingGlobal, setIsDraggingGlobal] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [currentPreset, setCurrentPreset] = useState<PerformancePreset>(manualPreset)
 
   // Load theme from saved name
   const [currentTheme, setCurrentTheme] = useState<ColorTheme>(() => {
     return themes.find(t => t.name.toLowerCase().replace(' ', '') === savedThemeName) || themes[1]
   })
+
+  // FPS monitoring for auto-adaptive quality
+  const fpsMonitor = useMemo(() => new FPSMonitor(), [])
+  const lastPresetChangeRef = useRef<number>(0)
 
   const handleFileSelect = useCallback(async (file: File) => {
     setIsLoading(true)
@@ -59,6 +67,33 @@ export default function Home() {
   useEffect(() => {
     audioControls.setVolume(volume)
   }, [audioControls, volume])
+
+  // Auto-adaptive quality based on FPS
+  const handleFPSUpdate = useCallback((newFPS: number) => {
+    setFps(newFPS)
+
+    if (autoAdaptiveQuality && showPostProcessing) {
+      fpsMonitor.addSample(newFPS)
+      const avgFPS = fpsMonitor.getAverageFPS()
+
+      // Only change preset if enough time has passed (prevent thrashing)
+      const now = Date.now()
+      if (now - lastPresetChangeRef.current > 3000) { // 3 second cooldown
+        const autoPreset = getAutoPreset(avgFPS)
+
+        if (autoPreset !== currentPreset) {
+          setCurrentPreset(autoPreset)
+          lastPresetChangeRef.current = now
+          console.log(`[Auto-Adaptive] FPS: ${avgFPS} → Preset: ${autoPreset}`)
+        }
+      }
+    } else if (!autoAdaptiveQuality) {
+      // Use manual preset
+      if (currentPreset !== manualPreset) {
+        setCurrentPreset(manualPreset)
+      }
+    }
+  }, [autoAdaptiveQuality, showPostProcessing, fpsMonitor, currentPreset, manualPreset])
 
   // Fullscreen toggle
   const toggleFullscreen = useCallback(() => {
@@ -200,9 +235,10 @@ export default function Home() {
           showPostProcessing={showPostProcessing}
           showParticles={showParticles}
           showFPS={showFPS}
-          onFPSUpdate={setFps}
+          onFPSUpdate={handleFPSUpdate}
           theme={currentTheme}
           visualizationMode={visualizationMode}
+          performancePreset={currentPreset}
         />
       )}
 

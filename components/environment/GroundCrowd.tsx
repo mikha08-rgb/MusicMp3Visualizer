@@ -34,6 +34,7 @@ export default function GroundCrowd({
   const crowdRef = useRef<THREE.InstancedMesh>(null)
   const tempObject = useMemo(() => new THREE.Object3D(), [])
   const tempColor = useMemo(() => new THREE.Color(), [])
+  const tempVector = useMemo(() => new THREE.Vector3(), []) // Reusable vector for distance checks
 
   // Generate crowd data
   const { peopleData, peopleCount } = useMemo(() => {
@@ -124,9 +125,9 @@ export default function GroundCrowd({
       const x = Math.cos(person.pathAngle) * person.pathRadius
       const z = Math.sin(person.pathAngle) * person.pathRadius
 
-      // Distance-based culling for performance
-      const personPos = new THREE.Vector3(x, person.height / 2, z)
-      if (!shouldRenderByDistance(personPos, camera, MAX_RENDER_DISTANCE)) {
+      // Distance-based culling for performance - reuse vector to avoid allocation
+      tempVector.set(x, person.height / 2, z)
+      if (!shouldRenderByDistance(tempVector, camera, MAX_RENDER_DISTANCE)) {
         // Hide by scaling to zero
         tempObject.scale.set(0, 0, 0)
         tempObject.updateMatrix()
