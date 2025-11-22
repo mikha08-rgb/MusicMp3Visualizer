@@ -24,6 +24,14 @@ import CargoShips from './environment/CargoShips'
 import SkyPlatforms from './environment/SkyPlatforms'
 import ReflectivePuddles from './environment/ReflectivePuddles'
 import DistantBackdrop from './environment/DistantBackdrop'
+import LightTrails from './environment/LightTrails'
+import CircuitBoard from './environment/CircuitBoard'
+import LightCycles from './environment/LightCycles'
+import Recognizers from './environment/Recognizers'
+import DataStreams from './environment/DataStreams'
+import EnergyBarriers from './environment/EnergyBarriers'
+import FloatingDiagnostics from './ui/FloatingDiagnostics'
+import TronHUD from './ui/TronHUD'
 import DynamicCamera from './effects/DynamicCamera'
 import ScreenFlash from './effects/ScreenFlash'
 import ParticleExplosions from './effects/ParticleExplosions'
@@ -269,8 +277,24 @@ export default function MusicVisualizerScene({
           {/* Distant Background - Ultra-lightweight 2D backdrop */}
           <DistantBackdrop bass={bass} theme={theme} />
 
+          {/* Tron Elements */}
+          <LightTrails bass={bass} mids={mids} theme={theme} />
+          <LightCycles bass={bass} mids={mids} beatDetected={beatDetected} theme={theme} />
+          <Recognizers bass={bass} mids={mids} beatDetected={beatDetected} theme={theme} />
+          <DataStreams bass={bass} mids={mids} theme={theme} />
+          <EnergyBarriers bass={bass} mids={mids} theme={theme} />
+          <TronHUD bass={bass} mids={mids} theme={theme} />
+          <FloatingDiagnostics
+            bass={bass}
+            mids={mids}
+            highs={highs}
+            frequencyData={frequencyData}
+            theme={theme}
+          />
+
           {/* Ground Layer - Foundation */}
           <CyberpunkGrid bass={bass} theme={theme} />
+          <CircuitBoard bass={bass} mids={mids} theme={theme} />
           <ReflectivePuddles bass={bass} mids={mids} theme={theme} />
 
           {/* City Buildings */}

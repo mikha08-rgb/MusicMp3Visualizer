@@ -108,6 +108,18 @@ export const themes: ColorTheme[] = [
       particles: '#d8b4fe',
     },
   },
+  {
+    id: 'tron',
+    name: 'Tron',
+    colors: {
+      primary: '#00D9FF',    // Classic Tron cyan
+      secondary: '#FF6C00',  // Tron orange (enemy/warning)
+      tertiary: '#0AFDFF',   // Electric blue highlights
+      orb: '#00D9FF',
+      orbEmissive: '#00FFFF', // Bright cyan glow
+      particles: '#00D9FF',
+    },
+  },
 ]
 
 export function getThemeById(id: string): ColorTheme {
