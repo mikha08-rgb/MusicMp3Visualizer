@@ -198,7 +198,7 @@ export default function StreetDetails({ bass, theme }: StreetDetailsProps) {
 
   const streetLightData = useMemo(() => {
     const lights = []
-    const count = 16 // Reduced from 24 for better performance
+    const count = 12 // Optimized for performance
     const radius = 55
 
     for (let i = 0; i < count; i++) {
@@ -224,7 +224,7 @@ export default function StreetDetails({ bass, theme }: StreetDetailsProps) {
 
   const vendingMachineData = useMemo(() => {
     const machines = []
-    const count = 6 // Reduced from 8 for better performance
+    const count = 4 // Optimized for performance
 
     for (let i = 0; i < count; i++) {
       const angle = (i / count) * Math.PI * 2
@@ -256,7 +256,7 @@ export default function StreetDetails({ bass, theme }: StreetDetailsProps) {
 
   const neonSignData = useMemo(() => {
     const signs = []
-    const count = 8 // Reduced from 12 for better performance
+    const count = 6 // Optimized for performance
 
     for (let i = 0; i < count; i++) {
       const angle = (i / count) * Math.PI * 2

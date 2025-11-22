@@ -108,7 +108,7 @@ export default function HolographicBillboards({
 
   const billboardData = useMemo(() => {
     const billboards = []
-    const count = 10 // Reduced from 15 for better performance
+    const count = 6 // Optimized for performance
 
     // Advertisement texts (just visual, not actual text rendering)
     const adTypes = ['AD', 'PROMO', 'SHOP', 'NEON', 'CYBER']

@@ -13,7 +13,7 @@ interface EnhancedCyberpunkCityProps {
   theme?: ColorTheme
 }
 
-type BuildingShape = 'box' | 'cylinder' | 'pyramid' | 'stepped'
+type BuildingShape = 'box' | 'cylinder' | 'pyramid' | 'stepped' | 'neo-gothic' | 'brutalist' | 'organic' | 'modular'
 
 // Building refs interface for centralized animation
 interface BuildingRefs {
@@ -177,6 +177,97 @@ function EnhancedBuilding({
             </mesh>
           </>
         )
+      case 'neo-gothic':
+        return (
+          <>
+            {/* Main tower */}
+            <mesh castShadow receiveShadow>
+              <boxGeometry args={[width, height * 0.8, depth]} />
+              <meshStandardMaterial color="#0a0a1a" roughness={0.2} metalness={0.9} />
+            </mesh>
+            {/* Pointed spire */}
+            <mesh castShadow position={[0, height * 0.5, 0]}>
+              <coneGeometry args={[width * 0.6, height * 0.4, 6]} />
+              <meshStandardMaterial color="#1a1a2e" roughness={0.3} metalness={0.8} />
+            </mesh>
+            {/* Vertical accent strips */}
+            <mesh position={[width * 0.35, 0, 0]}>
+              <boxGeometry args={[0.1, height * 0.8, depth * 1.05]} />
+              <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.3} />
+            </mesh>
+            <mesh position={[-width * 0.35, 0, 0]}>
+              <boxGeometry args={[0.1, height * 0.8, depth * 1.05]} />
+              <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.3} />
+            </mesh>
+          </>
+        )
+      case 'brutalist':
+        return (
+          <>
+            {/* Main chunky base */}
+            <mesh castShadow receiveShadow>
+              <boxGeometry args={[width * 1.3, height * 0.4, depth * 1.3]} />
+              <meshStandardMaterial color="#151520" roughness={0.8} metalness={0.2} />
+            </mesh>
+            {/* Offset middle section */}
+            <mesh castShadow receiveShadow position={[width * 0.3, height * 0.2, 0]}>
+              <boxGeometry args={[width, height * 0.4, depth]} />
+              <meshStandardMaterial color="#0a0a1a" roughness={0.7} metalness={0.3} />
+            </mesh>
+            {/* Cantilevered top */}
+            <mesh castShadow receiveShadow position={[-width * 0.2, height * 0.45, 0]}>
+              <boxGeometry args={[width * 1.1, height * 0.3, depth * 0.9]} />
+              <meshStandardMaterial color="#1a1a2e" roughness={0.6} metalness={0.4} />
+            </mesh>
+          </>
+        )
+      case 'organic':
+        return (
+          <>
+            {/* Flowing curved base */}
+            <mesh castShadow receiveShadow position={[0, -height * 0.1, 0]}>
+              <cylinderGeometry args={[width * 0.8, width * 0.6, height * 0.4, 12]} />
+              <meshStandardMaterial color="#0a0a1a" roughness={0.3} metalness={0.7} />
+            </mesh>
+            {/* Middle bulge */}
+            <mesh castShadow receiveShadow position={[0, height * 0.15, 0]}>
+              <sphereGeometry args={[width * 0.6, 8, 8]} />
+              <meshStandardMaterial color="#1a1a2e" roughness={0.2} metalness={0.8} />
+            </mesh>
+            {/* Tapered top */}
+            <mesh castShadow receiveShadow position={[0, height * 0.35, 0]}>
+              <cylinderGeometry args={[width * 0.3, width * 0.5, height * 0.5, 12]} />
+              <meshStandardMaterial color="#0a0a1a" roughness={0.3} metalness={0.7} />
+            </mesh>
+          </>
+        )
+      case 'modular':
+        return (
+          <>
+            {/* Stacked container aesthetic */}
+            <mesh castShadow receiveShadow position={[0, -height * 0.3, 0]}>
+              <boxGeometry args={[width * 1.2, height * 0.3, depth]} />
+              <meshStandardMaterial color="#2a1a1a" roughness={0.7} metalness={0.5} />
+            </mesh>
+            <mesh castShadow receiveShadow position={[width * 0.15, -height * 0.05, 0]}>
+              <boxGeometry args={[width * 0.9, height * 0.3, depth * 0.9]} />
+              <meshStandardMaterial color="#1a2a2a" roughness={0.7} metalness={0.5} />
+            </mesh>
+            <mesh castShadow receiveShadow position={[-width * 0.1, height * 0.2, 0]}>
+              <boxGeometry args={[width, height * 0.3, depth * 0.85]} />
+              <meshStandardMaterial color="#1a1a2a" roughness={0.7} metalness={0.5} />
+            </mesh>
+            <mesh castShadow receiveShadow position={[width * 0.05, height * 0.45, 0]}>
+              <boxGeometry args={[width * 0.8, height * 0.2, depth * 0.8]} />
+              <meshStandardMaterial color="#2a2a1a" roughness={0.7} metalness={0.5} />
+            </mesh>
+            {/* Connecting emissive strips */}
+            <mesh position={[0, 0, 0]}>
+              <boxGeometry args={[0.15, height, 0.15]} />
+              <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.5} />
+            </mesh>
+          </>
+        )
       default: // box
         return (
           <mesh castShadow receiveShadow>
@@ -220,25 +311,127 @@ function EnhancedBuilding({
         />
       </mesh>
 
-      {/* Rooftop details */}
+      {/* Rooftop details - varied by building type */}
       <group position={[0, height / 2, 0]}>
-        {/* Antenna */}
-        <mesh position={[0, 2, 0]}>
-          <cylinderGeometry args={[0.1, 0.1, 4, 8]} />
+        {/* Primary antenna/communication array */}
+        <mesh position={[width * 0.2, 2, depth * 0.2]}>
+          <cylinderGeometry args={[0.08, 0.08, 4, 6]} />
           <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.3} />
         </mesh>
-        {/* Antenna light */}
-        <mesh position={[0, 4.2, 0]}>
-          <sphereGeometry args={[0.2, 8, 8]} />
+        {/* Antenna beacon */}
+        <mesh position={[width * 0.2, 4.2, depth * 0.2]}>
+          <sphereGeometry args={[0.15, 6, 6]} />
           <meshStandardMaterial
             color={color}
             emissive={color}
-            emissiveIntensity={1.5}
+            emissiveIntensity={1.8}
             toneMapped={false}
           />
         </mesh>
-        <pointLight position={[0, 4.2, 0]} color={color} intensity={2} distance={10} />
+
+        {/* Satellite dish (rotates!) */}
+        <mesh position={[-width * 0.25, 0.5, -depth * 0.25]} rotation={[Math.PI / 4, 0, 0]}>
+          <cylinderGeometry args={[0.6, 0.4, 0.1, 12]} />
+          <meshStandardMaterial color="#2a2a2e" metalness={0.9} roughness={0.1} />
+        </mesh>
+        {/* Dish center */}
+        <mesh position={[-width * 0.25, 0.5, -depth * 0.25]}>
+          <sphereGeometry args={[0.15, 6, 6]} />
+          <meshStandardMaterial
+            color={color}
+            emissive={color}
+            emissiveIntensity={0.8}
+            toneMapped={false}
+          />
+        </mesh>
+
+        {/* Helipad marking (some buildings) */}
+        {Math.random() > 0.6 && (
+          <>
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
+              <ringGeometry args={[width * 0.3, width * 0.35, 16]} />
+              <meshStandardMaterial
+                color="#ffaa00"
+                emissive="#ffaa00"
+                emissiveIntensity={0.6}
+                toneMapped={false}
+              />
+            </mesh>
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.06, 0]}>
+              <circleGeometry args={[width * 0.15, 16]} />
+              <meshStandardMaterial
+                color="#ffaa00"
+                emissive="#ffaa00"
+                emissiveIntensity={0.8}
+                toneMapped={false}
+              />
+            </mesh>
+          </>
+        )}
+
+        {/* Rooftop billboard (some buildings) */}
+        {Math.random() > 0.5 && (
+          <mesh position={[0, 3, 0]}>
+            <boxGeometry args={[width * 0.8, height * 0.12, 0.1]} />
+            <meshStandardMaterial
+              color={color}
+              emissive={color}
+              emissiveIntensity={0.9}
+              toneMapped={false}
+            />
+          </mesh>
+        )}
+
+        {/* AC units / industrial equipment */}
+        {Math.random() > 0.4 && (
+          <>
+            <mesh position={[width * 0.15, 0.3, depth * 0.15]}>
+              <boxGeometry args={[0.8, 0.6, 0.6]} />
+              <meshStandardMaterial color="#1a1a2a" metalness={0.5} roughness={0.7} />
+            </mesh>
+            {/* Exhaust vent */}
+            <mesh position={[width * 0.15, 0.7, depth * 0.15]}>
+              <cylinderGeometry args={[0.15, 0.15, 0.3, 6]} />
+              <meshStandardMaterial
+                color="#3a3a4a"
+                emissive="#ff6600"
+                emissiveIntensity={0.2}
+              />
+            </mesh>
+          </>
+        )}
       </group>
+
+      {/* Mid-level details - balconies */}
+      {Math.random() > 0.5 && (
+        <>
+          <mesh position={[0, height * 0.3, shape === 'cylinder' ? width / 2 : depth / 2 + 0.2]}>
+            <boxGeometry args={[width * 0.4, 0.1, 0.5]} />
+            <meshStandardMaterial color="#1a1a2a" metalness={0.7} roughness={0.3} />
+          </mesh>
+          {/* Balcony light */}
+          <mesh position={[0, height * 0.3, shape === 'cylinder' ? width / 2 + 0.3 : depth / 2 + 0.5]}>
+            <boxGeometry args={[0.15, 0.05, 0.05]} />
+            <meshStandardMaterial
+              color="#ffaa00"
+              emissive="#ffaa00"
+              emissiveIntensity={0.8}
+              toneMapped={false}
+            />
+          </mesh>
+        </>
+      )}
+
+      {/* Horizontal neon accent strips */}
+      <mesh position={[0, height * 0.6, 0]}>
+        <boxGeometry args={[width * 1.02, 0.05, depth * 1.02]} />
+        <meshStandardMaterial
+          color={color}
+          emissive={color}
+          emissiveIntensity={0.4}
+          toneMapped={false}
+        />
+      </mesh>
 
       {/* Neon signage on building side */}
       <mesh
@@ -278,7 +471,10 @@ export default function EnhancedCyberpunkCity({
     const cityRadius = 45
     const rings = 3
     const buildingsPerRing = buildingCount / rings
-    const shapes: BuildingShape[] = ['box', 'cylinder', 'pyramid', 'stepped']
+    const shapes: BuildingShape[] = [
+      'box', 'cylinder', 'pyramid', 'stepped',
+      'neo-gothic', 'brutalist', 'organic', 'modular'
+    ]
 
     for (let ring = 0; ring < rings; ring++) {
       const radius = cityRadius + ring * 25
@@ -295,9 +491,8 @@ export default function EnhancedCyberpunkCity({
         const depth = baseSize
         const baseHeight = 12 + Math.random() * 35 + ring * 18
 
-        // Choose shape - outer rings have more variety
-        const shapeIndex = ring === 0 ? 0 : Math.floor(Math.random() * shapes.length)
-        const shape = shapes[shapeIndex]
+        // Choose shape - all 8 types for maximum variety
+        const shape = shapes[Math.floor(Math.random() * shapes.length)]
 
         // Neon colors
         let color: THREE.Color

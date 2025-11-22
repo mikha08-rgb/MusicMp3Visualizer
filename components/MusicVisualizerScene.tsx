@@ -4,8 +4,8 @@ import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Environment, Fog } from '@react-three/drei'
 import { Suspense, useRef, useMemo, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { EffectComposer, Bloom, Vignette, ChromaticAberration } from '@react-three/postprocessing'
-import { BlendFunction } from 'postprocessing'
+import { EffectComposer, Bloom, Vignette, ChromaticAberration, GodRays } from '@react-three/postprocessing'
+import { BlendFunction, KernelSize } from 'postprocessing'
 import * as THREE from 'three'
 import LayeredRings from './visualizations/LayeredRings'
 import CircularSpectrum from './visualizations/CircularSpectrum'
@@ -15,11 +15,13 @@ import HolographicBillboards from './environment/HolographicBillboards'
 import FlyingVehicles from './environment/FlyingVehicles'
 import StreetDetails from './environment/StreetDetails'
 import AtmosphericEffects from './environment/AtmosphericEffects'
-import LaserSearchlights from './environment/LaserSearchlights'
-import EnergyShield from './environment/EnergyShield'
-import DataStreams from './environment/DataStreams'
-import NeonTrails from './environment/NeonTrails'
-import VolumetricLights from './environment/VolumetricLights'
+import GroundCrowd from './environment/GroundCrowd'
+import GroundVehicles from './environment/GroundVehicles'
+import MarketStalls from './environment/MarketStalls'
+import DroneSwarm from './environment/DroneSwarm'
+import CargoShips from './environment/CargoShips'
+import SkyPlatforms from './environment/SkyPlatforms'
+import ReflectivePuddles from './environment/ReflectivePuddles'
 import type { ColorTheme } from '@/lib/themes'
 
 function FPSCounter({ onFPSUpdate }: { onFPSUpdate?: (fps: number) => void }) {
@@ -66,10 +68,11 @@ interface MusicVisualizerSceneProps {
   onFPSUpdate?: (fps: number) => void
   theme?: ColorTheme
   visualizationMode?: 'rings' | 'spectrum'
+  showGodRays?: boolean
 }
 
-function Lights({ theme, bass }: { theme?: ColorTheme; bass: number }) {
-  const light1Ref = useRef<THREE.PointLight>(null)
+function Lights({ theme, bass, mainLightRef }: { theme?: ColorTheme; bass: number; mainLightRef?: React.RefObject<THREE.PointLight> }) {
+  const light1Ref = mainLightRef || useRef<THREE.PointLight>(null)
   const light2Ref = useRef<THREE.PointLight>(null)
   const light3Ref = useRef<THREE.PointLight>(null)
 
@@ -114,16 +117,32 @@ function Lights({ theme, bass }: { theme?: ColorTheme; bass: number }) {
   )
 }
 
-function StaticPostProcessing() {
+function EnhancedPostProcessing({ bass, lightRef, showGodRays }: { bass: number; lightRef: React.RefObject<THREE.PointLight>; showGodRays?: boolean }) {
   return (
-    <EffectComposer>
-      {/* Enhanced bloom for neon glow */}
+    <EffectComposer multisampling={0}>
+      {/* Enhanced bloom for neon glow with bass reactivity */}
       <Bloom
-        intensity={1.2}
+        intensity={1.2 + bass * 0.3}
         luminanceThreshold={0.2}
         luminanceSmoothing={0.9}
         mipmapBlur
       />
+
+      {/* God rays from main light source - optional for performance */}
+      {showGodRays && lightRef.current && (
+        <GodRays
+          sun={lightRef.current}
+          exposure={0.15}
+          decay={0.95}
+          density={0.7}
+          weight={0.5}
+          samples={40}
+          clampMax={1}
+          blur={true}
+          kernelSize={KernelSize.SMALL}
+          blendFunction={BlendFunction.SCREEN}
+        />
+      )}
 
       {/* Vignette for cinematic focus */}
       <Vignette
@@ -135,7 +154,7 @@ function StaticPostProcessing() {
 
       {/* Subtle chromatic aberration for cyberpunk feel */}
       <ChromaticAberration
-        offset={[0.0015, 0.0015]}
+        offset={[0.0015 + bass * 0.0005, 0.0015 + bass * 0.0005]}
         blendFunction={BlendFunction.NORMAL}
       />
     </EffectComposer>
@@ -154,8 +173,11 @@ export default function MusicVisualizerScene({
   showFPS = false,
   onFPSUpdate,
   theme,
-  visualizationMode = 'rings'
+  visualizationMode = 'rings',
+  showGodRays = false
 }: MusicVisualizerSceneProps) {
+  const mainLightRef = useRef<THREE.PointLight>(null)
+
   return (
     <div className="w-full h-full">
       <Canvas
@@ -179,12 +201,16 @@ export default function MusicVisualizerScene({
           {/* Atmospheric fog - darker and more purple/cyan for cyberpunk feel */}
           <fog attach="fog" args={['#0a0a1e', 40, 180]} />
 
-          <Lights theme={theme} bass={bass} />
+          <Lights theme={theme} bass={bass} mainLightRef={mainLightRef} />
 
           {/* FPS Counter */}
           {showFPS && <FPSCounter onFPSUpdate={onFPSUpdate} />}
 
-          {/* Enhanced Cyberpunk City with varied architecture */}
+          {/* Ground Layer - Foundation */}
+          <CyberpunkGrid bass={bass} theme={theme} />
+          <ReflectivePuddles bass={bass} mids={mids} theme={theme} />
+
+          {/* City Buildings */}
           <EnhancedCyberpunkCity
             bass={bass}
             mids={mids}
@@ -192,7 +218,31 @@ export default function MusicVisualizerScene({
             beatDetected={beatDetected}
             theme={theme}
           />
-          <CyberpunkGrid bass={bass} theme={theme} />
+
+          {/* Ground Level Activity */}
+          <GroundCrowd
+            bass={bass}
+            mids={mids}
+            highs={highs}
+            beatDetected={beatDetected}
+            theme={theme}
+          />
+          <GroundVehicles
+            bass={bass}
+            mids={mids}
+            beatDetected={beatDetected}
+            theme={theme}
+          />
+          <MarketStalls
+            bass={bass}
+            mids={mids}
+            highs={highs}
+            beatDetected={beatDetected}
+            theme={theme}
+          />
+          <StreetDetails bass={bass} theme={theme} />
+
+          {/* Mid-Level Elements */}
           <HolographicBillboards
             bass={bass}
             mids={mids}
@@ -200,11 +250,30 @@ export default function MusicVisualizerScene({
             beatDetected={beatDetected}
             theme={theme}
           />
-          <FlyingVehicles bass={bass} theme={theme} />
-          <StreetDetails bass={bass} theme={theme} />
           <AtmosphericEffects bass={bass} theme={theme} showRain={true} />
 
-          {/* Removed heavy effects - focusing on buildings instead */}
+          {/* Sky Level Activity */}
+          <DroneSwarm
+            bass={bass}
+            mids={mids}
+            highs={highs}
+            beatDetected={beatDetected}
+            theme={theme}
+          />
+          <FlyingVehicles bass={bass} theme={theme} />
+          <CargoShips
+            bass={bass}
+            mids={mids}
+            beatDetected={beatDetected}
+            theme={theme}
+          />
+          <SkyPlatforms
+            bass={bass}
+            mids={mids}
+            highs={highs}
+            beatDetected={beatDetected}
+            theme={theme}
+          />
 
           {/* Visualization - switch based on mode */}
           {visualizationMode === 'rings' ? (
@@ -244,7 +313,7 @@ export default function MusicVisualizerScene({
           <Environment preset="night" />
 
           {/* Post-processing effects */}
-          {showPostProcessing && <StaticPostProcessing />}
+          {showPostProcessing && <EnhancedPostProcessing bass={bass} lightRef={mainLightRef} showGodRays={showGodRays} />}
         </Suspense>
       </Canvas>
     </div>

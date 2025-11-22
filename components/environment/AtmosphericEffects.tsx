@@ -21,7 +21,7 @@ export default function AtmosphericEffects({
 
   // Rain particles
   const rainData = useMemo(() => {
-    const particleCount = 1000 // Reduced from 2000 for better performance
+    const particleCount = 400 // Optimized for performance
     const positions = new Float32Array(particleCount * 3)
     const velocities = new Float32Array(particleCount)
 
@@ -39,7 +39,7 @@ export default function AtmosphericEffects({
 
   // Fog particles (dust motes, smog)
   const fogData = useMemo(() => {
-    const particleCount = 250 // Reduced from 500 for better performance
+    const particleCount = 150 // Optimized for performance
     const positions = new Float32Array(particleCount * 3)
     const speeds = new Float32Array(particleCount)
     const phases = new Float32Array(particleCount)
