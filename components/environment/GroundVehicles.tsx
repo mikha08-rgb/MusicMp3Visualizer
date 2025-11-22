@@ -1056,7 +1056,7 @@ export default function GroundVehicles({
 
   const vehicleData = useMemo(() => {
     const vehicles = []
-    const count = 16 // Optimized for performance
+    const count = 12 // Optimized for performance
 
     const types: Array<'car' | 'motorcycle' | 'truck' | 'sports-car' | 'hovercar' | 'bus' | 'police-car' | 'van' | 'luxury-sedan' | 'cyberpunk-racer' | 'armored-transport' | 'street-food-cart' | 'emergency-vehicle' | 'tank' | 'bulldozer' | 'crane-truck' | 'cement-mixer' | 'limousine' | 'taxi' | 'fire-truck' | 'tow-truck' | 'delivery-robot' | 'garbage-truck'> = [
       'car', 'motorcycle', 'truck', 'sports-car', 'hovercar', 'bus',
@@ -1070,7 +1070,7 @@ export default function GroundVehicles({
     for (let i = 0; i < count; i++) {
       const lane = Math.floor(i / 8) // 3 lanes
       const pathRadius = 38 + lane * 5
-      const speed = 0.15 + Math.random() * 0.1
+      const speed = 0.05 + Math.random() * 0.03
       const vehicleType = types[Math.floor(Math.random() * types.length)]
 
       let size = 0.6 // default car size
@@ -1137,8 +1137,12 @@ export default function GroundVehicles({
     vehicleRefsArray.current.forEach((refs, index) => {
       if (!refs?.groupRef.current || !refs.headlightsRef.current || !refs.brakelightsRef.current) return
 
+      // Speed up on beats (but don't permanently modify the speed!)
+      const beatBoost = beatDetected ? 1.3 : 1.0
+      const currentSpeed = refs.speed * beatBoost
+
       // Move along circular path
-      refs.pathAngle += refs.speed * 0.016 // ~60fps normalized
+      refs.pathAngle += currentSpeed * 0.016 // ~60fps normalized
 
       const x = Math.cos(refs.pathAngle) * refs.pathRadius
       const z = Math.sin(refs.pathAngle) * refs.pathRadius
@@ -1172,10 +1176,6 @@ export default function GroundVehicles({
 
       // Slight bounce with bass
       refs.groupRef.current.position.y = 0.3 + bass * 0.1
-
-      // Speed up on beats
-      const beatBoost = beatDetected ? 1.5 : 1.0
-      refs.speed = Math.abs(refs.speed) * (refs.speed > 0 ? beatBoost : -beatBoost)
     })
   })
 

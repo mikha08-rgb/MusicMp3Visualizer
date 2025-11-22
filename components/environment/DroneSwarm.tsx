@@ -42,7 +42,7 @@ export default function DroneSwarm({
 
   // Generate drone data
   const { droneData, droneCount } = useMemo(() => {
-    const count = 25 // Optimized for performance
+    const count = 20 // Optimized for performance
     const drones: DroneData[] = []
 
     const droneTypes: DroneType[] = [

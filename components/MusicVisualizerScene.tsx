@@ -213,7 +213,7 @@ export default function MusicVisualizerScene({
           preserveDrawingBuffer: false,
           failIfMajorPerformanceCaveat: false,
         }}
-        dpr={1}
+        dpr={1.5}
         flat
       >
         <Suspense fallback={null}>

@@ -38,7 +38,7 @@ export default function GroundCrowd({
 
   // Generate crowd data
   const { peopleData, peopleCount } = useMemo(() => {
-    const count = 80 // Optimized for performance
+    const count = 64 // Optimized for performance
     const people: PersonData[] = []
 
     // Create people at different radii (street level)

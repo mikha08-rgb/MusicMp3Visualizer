@@ -61,7 +61,7 @@ function EnhancedBuilding({
     if (shape === 'box') {
       // Windows on 4 faces
       const windowsPerSide = Math.floor(Math.max(width, depth) / 1.5)
-      windowCount = Math.min(windowsPerSide * floors * 4, 120)
+      windowCount = Math.min(windowsPerSide * floors * 4, 90)
 
       for (let i = 0; i < windowCount; i++) {
         const floor = i % floors
@@ -87,7 +87,7 @@ function EnhancedBuilding({
     } else if (shape === 'cylinder') {
       // Circular windows
       const windowsPerFloor = 12
-      windowCount = Math.min(windowsPerFloor * floors, 100)
+      windowCount = Math.min(windowsPerFloor * floors, 75)
 
       for (let i = 0; i < windowCount; i++) {
         const floor = i % floors
@@ -879,7 +879,7 @@ export default function EnhancedCyberpunkCity({
   beatDetected,
   theme
 }: EnhancedCyberpunkCityProps) {
-  const buildingCount = 28
+  const buildingCount = 24
   const buildingRefsArray = useRef<Array<BuildingRefs & { pulsePhase: number; tempColor: THREE.Color }>>([])
   const tempColor = useMemo(() => new THREE.Color(), [])
 
