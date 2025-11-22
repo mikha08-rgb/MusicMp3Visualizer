@@ -114,21 +114,21 @@ function Lights({ theme, bass, mainLightRef }: { theme?: ColorTheme; bass: numbe
 
   useFrame(() => {
     if (light1Ref.current && light2Ref.current && light3Ref.current) {
-      // Lights pulse with bass
-      const intensity = 1 + bass * 2
+      // Very subtle light pulse with bass
+      const intensity = 0.6 + bass * 0.3 // Reduced from 1 + bass * 2
       light1Ref.current.intensity = intensity
-      light2Ref.current.intensity = intensity * 0.7
-      light3Ref.current.intensity = intensity * 0.7
+      light2Ref.current.intensity = intensity * 0.5 // Reduced from 0.7
+      light3Ref.current.intensity = intensity * 0.5 // Reduced from 0.7
     }
   })
 
   return (
     <>
-      <ambientLight intensity={0.2} />
+      <ambientLight intensity={0.15} />
       <pointLight
         ref={light1Ref}
         position={[0, 25, 0]}
-        intensity={1}
+        intensity={0.6}
         color={theme?.colors.orb || '#ffffff'}
         distance={100}
         decay={2}
@@ -136,7 +136,7 @@ function Lights({ theme, bass, mainLightRef }: { theme?: ColorTheme; bass: numbe
       <pointLight
         ref={light2Ref}
         position={[30, 15, 30]}
-        intensity={0.7}
+        intensity={0.4}
         color={theme?.colors.primary || '#00ffff'}
         distance={80}
         decay={2}
@@ -144,7 +144,7 @@ function Lights({ theme, bass, mainLightRef }: { theme?: ColorTheme; bass: numbe
       <pointLight
         ref={light3Ref}
         position={[-30, 15, -30]}
-        intensity={0.7}
+        intensity={0.4}
         color={theme?.colors.secondary || '#ff00ff'}
         distance={80}
         decay={2}

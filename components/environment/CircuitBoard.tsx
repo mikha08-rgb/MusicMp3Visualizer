@@ -195,11 +195,11 @@ export default function CircuitBoard({ bass, mids, theme }: CircuitBoardProps) {
       <instancedMesh ref={nodesRef} args={[undefined, undefined, nodeCount]}>
         <sphereGeometry args={[0.3, 8, 8]} />
         <meshStandardMaterial
-          color="white"
+          color={primaryColor}
           emissive={primaryColor}
-          emissiveIntensity={3}
+          emissiveIntensity={0.8}
           transparent
-          opacity={0.9}
+          opacity={0.6}
         />
       </instancedMesh>
 
@@ -207,11 +207,11 @@ export default function CircuitBoard({ bass, mids, theme }: CircuitBoardProps) {
       <instancedMesh ref={dataPacketsRef} args={[undefined, undefined, dataPacketCount]}>
         <sphereGeometry args={[0.2, 6, 6]} />
         <meshStandardMaterial
-          color="white"
+          color={tertiaryColor}
           emissive={tertiaryColor}
-          emissiveIntensity={4}
+          emissiveIntensity={1}
           transparent
-          opacity={0.95}
+          opacity={0.7}
         />
       </instancedMesh>
     </group>
