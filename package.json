@@ -1,6 +1,7 @@
 {
-  "name": "testvisual",
-  "version": "0.1.0",
+  "name": "gridbeats",
+  "version": "1.0.0",
+  "description": "Immersive 3D music visualizer with Tron-inspired aesthetics. Upload audio and watch frequencies come alive in a cyberpunk grid.",
   "private": true,
   "scripts": {
     "dev": "next dev",

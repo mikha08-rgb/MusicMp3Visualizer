@@ -6,8 +6,8 @@ import GoogleAnalytics from "@/components/GoogleAnalytics";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Music Visualizer - 3D Audio Visualization",
-  description: "Immersive 3D music visualizer built with Next.js, Three.js, and React Three Fiber. Upload audio files and watch them transform into reactive frequency visualizations.",
+  title: "GridBeats - 3D Music Visualizer",
+  description: "Experience your music in a stunning Tron-inspired 3D world. Upload audio and watch frequencies dance across a cyberpunk grid with reactive visualizations, multiple themes, and immersive effects.",
 };
 
 export default function RootLayout({
