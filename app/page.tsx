@@ -142,6 +142,14 @@ export default function Home() {
     setSavedThemeName(theme.name.toLowerCase().replace(' ', ''))
   }, [setSavedThemeName])
 
+  // Handle manual performance preset changes
+  const handlePerformanceChange = useCallback((preset: PerformancePreset) => {
+    setManualPreset(preset)
+    setCurrentPreset(preset)
+    // Disable auto-adaptive quality when user manually changes preset
+    setAutoAdaptiveQuality(false)
+  }, [setManualPreset, setAutoAdaptiveQuality])
+
   const hasAudio = audioState.audioFile !== null
 
   // Keyboard controls
@@ -293,6 +301,8 @@ export default function Home() {
             onToggleParticles={() => setShowParticles(!showParticles)}
             isFullscreen={isFullscreen}
             onToggleFullscreen={toggleFullscreen}
+            performancePreset={manualPreset}
+            onPerformanceChange={handlePerformanceChange}
           />
         </div>
       )}

@@ -21,6 +21,8 @@ interface VehicleRefs {
   speed: number
   isBraking: boolean
   brakeTimer: number
+  currentBounce: number // Smoothed bass bounce
+  currentBoost: number // Smoothed beat boost
 }
 
 function GroundVehicle({
@@ -54,7 +56,9 @@ function GroundVehicle({
         pathAngle,
         speed,
         isBraking: false,
-        brakeTimer: 0
+        brakeTimer: 0,
+        currentBounce: 0,
+        currentBoost: 1.0
       })
     }
   }, [])
@@ -1137,9 +1141,12 @@ export default function GroundVehicles({
     vehicleRefsArray.current.forEach((refs, index) => {
       if (!refs?.groupRef.current || !refs.headlightsRef.current || !refs.brakelightsRef.current) return
 
-      // Speed up on beats (but don't permanently modify the speed!)
-      const beatBoost = beatDetected ? 1.3 : 1.0
-      const currentSpeed = refs.speed * beatBoost
+      // SMOOTH beat boost - interpolate instead of instant jump
+      const targetBoost = beatDetected ? 1.3 : 1.0
+      const boostSpeed = beatDetected ? 0.15 : 0.08 // Fast ramp up, slower ramp down
+      refs.currentBoost += (targetBoost - refs.currentBoost) * boostSpeed
+
+      const currentSpeed = refs.speed * refs.currentBoost
 
       // Move along circular path
       refs.pathAngle += currentSpeed * 0.016 // ~60fps normalized
@@ -1147,7 +1154,11 @@ export default function GroundVehicles({
       const x = Math.cos(refs.pathAngle) * refs.pathRadius
       const z = Math.sin(refs.pathAngle) * refs.pathRadius
 
-      refs.groupRef.current.position.set(x, 0.3, z)
+      // SMOOTH bass bounce - interpolate instead of instant jump
+      const targetBounce = bass * 0.1
+      refs.currentBounce += (targetBounce - refs.currentBounce) * 0.1 // Smooth interpolation
+
+      refs.groupRef.current.position.set(x, 0.3 + refs.currentBounce, z)
 
       // Face direction of travel
       refs.groupRef.current.rotation.y = refs.pathAngle + (refs.speed > 0 ? Math.PI / 2 : -Math.PI / 2)
@@ -1173,9 +1184,6 @@ export default function GroundVehicles({
       }
 
       // Headlights are always on (meshBasicMaterial)
-
-      // Slight bounce with bass
-      refs.groupRef.current.position.y = 0.3 + bass * 0.1
     })
   })
 

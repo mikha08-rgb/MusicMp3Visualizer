@@ -868,6 +868,300 @@ function EnhancedBuilding({
           toneMapped={false}
         />
       </mesh>
+
+      {/* Fire escape (zigzag stairs on building side) - box buildings only */}
+      {(shape === 'box' || shape === 'stepped') && Math.random() > 0.5 && (
+        <group position={[width / 2 + 0.3, 0, 0]}>
+          {/* Create zigzag platforms */}
+          {Array.from({ length: Math.floor(height / 3.5) }).map((_, floor) => {
+            const side = floor % 2 === 0 ? 1 : -1
+            const floorHeight = floor * 3.5 + 2
+            return (
+              <group key={floor}>
+                {/* Platform */}
+                <mesh position={[side * 0.3, floorHeight, 0]}>
+                  <boxGeometry args={[0.8, 0.05, 2]} />
+                  <meshStandardMaterial color="#2a2a2a" metalness={0.8} roughness={0.4} />
+                </mesh>
+                {/* Railing */}
+                <mesh position={[side * 0.7, floorHeight + 0.5, 0]}>
+                  <boxGeometry args={[0.05, 1, 2]} />
+                  <meshStandardMaterial color="#3a3a3a" metalness={0.7} roughness={0.5} />
+                </mesh>
+                {/* Ladder/stairs to next level */}
+                {floor < Math.floor(height / 3.5) - 1 && (
+                  <mesh position={[side * 0.3, floorHeight + 1.75, 0]} rotation={[0, 0, side * Math.PI / 6]}>
+                    <boxGeometry args={[0.05, 3.5, 0.5]} />
+                    <meshStandardMaterial color="#2a2a2a" metalness={0.8} roughness={0.4} />
+                  </mesh>
+                )}
+              </group>
+            )
+          })}
+        </group>
+      )}
+
+      {/* External AC units and vents on sides */}
+      {Math.random() > 0.6 && (
+        <>
+          {[1, 2, 3].map((floor) => {
+            const floorY = (floor / 4) * height
+            return (
+              <group key={`ac-${floor}`} position={[shape === 'cylinder' ? 0 : -width / 2 - 0.2, floorY, shape === 'cylinder' ? width / 2 : 0]}>
+                {/* AC box */}
+                <mesh>
+                  <boxGeometry args={[0.6, 0.4, 0.4]} />
+                  <meshStandardMaterial color="#2a2a2a" metalness={0.5} roughness={0.7} />
+                </mesh>
+                {/* Exhaust glow */}
+                <mesh position={shape === 'cylinder' ? [0, 0, 0.3] : [-0.3, 0, 0]}>
+                  <boxGeometry args={[0.3, 0.2, 0.05]} />
+                  <meshStandardMaterial
+                    color="#ff3300"
+                    emissive="#ff3300"
+                    emissiveIntensity={0.4}
+                  />
+                </mesh>
+              </group>
+            )
+          })}
+        </>
+      )}
+
+      {/* Vertical neon light strips on corners */}
+      {(shape === 'box' || shape === 'stepped') && Math.random() > 0.4 && (
+        <>
+          {[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([x, z], i) => (
+            <mesh
+              key={`corner-light-${i}`}
+              position={[x * width * 0.51, 0, z * depth * 0.51]}
+            >
+              <boxGeometry args={[0.05, height, 0.05]} />
+              <meshStandardMaterial
+                color={color}
+                emissive={color}
+                emissiveIntensity={0.6}
+                toneMapped={false}
+              />
+            </mesh>
+          ))}
+        </>
+      )}
+
+      {/* Small decorative details - pipes, conduits */}
+      {Math.random() > 0.7 && (
+        <group position={[0, height * 0.25, shape === 'cylinder' ? width / 2 + 0.1 : depth / 2 + 0.1]}>
+          {[0, 0.5, 1].map((offset, i) => (
+            <mesh key={i} position={[0, height * 0.15 * offset, 0]} rotation={[Math.PI / 2, 0, 0]}>
+              <cylinderGeometry args={[0.08, 0.08, depth * 0.8, 6]} />
+              <meshStandardMaterial
+                color="#1a1a2a"
+                metalness={0.9}
+                roughness={0.3}
+              />
+            </mesh>
+          ))}
+        </group>
+      )}
+    </group>
+  )
+}
+
+// Skybridge connection component
+function Skybridge({
+  start,
+  end,
+  height,
+  color,
+  bass
+}: {
+  start: THREE.Vector3
+  end: THREE.Vector3
+  height: number
+  color: THREE.Color
+  bass: number
+}) {
+  const meshRef = useRef<THREE.Mesh>(null)
+  const distance = start.distanceTo(end)
+  const midPoint = new THREE.Vector3().lerpVectors(start, end, 0.5)
+  const angle = Math.atan2(end.z - start.z, end.x - start.x)
+
+  useFrame(() => {
+    if (!meshRef.current) return
+    const material = meshRef.current.material as THREE.MeshStandardMaterial
+    material.emissiveIntensity = 0.3 + bass * 0.4
+  })
+
+  return (
+    <group position={[midPoint.x, height, midPoint.z]} rotation={[0, angle, 0]}>
+      {/* Main bridge structure */}
+      <mesh>
+        <boxGeometry args={[distance, 0.3, 2]} />
+        <meshStandardMaterial color="#1a1a2e" metalness={0.8} roughness={0.2} />
+      </mesh>
+      {/* Glass walls */}
+      <mesh position={[0, 1, 1.2]}>
+        <boxGeometry args={[distance, 1.8, 0.1]} />
+        <meshStandardMaterial
+          color="#004466"
+          transparent
+          opacity={0.3}
+          metalness={0.5}
+          roughness={0.1}
+        />
+      </mesh>
+      <mesh position={[0, 1, -1.2]}>
+        <boxGeometry args={[distance, 1.8, 0.1]} />
+        <meshStandardMaterial
+          color="#004466"
+          transparent
+          opacity={0.3}
+          metalness={0.5}
+          roughness={0.1}
+        />
+      </mesh>
+      {/* Neon strip along bottom */}
+      <mesh ref={meshRef} position={[0, -0.2, 0]}>
+        <boxGeometry args={[distance, 0.05, 2.1]} />
+        <meshStandardMaterial
+          color={color}
+          emissive={color}
+          emissiveIntensity={0.3}
+          toneMapped={false}
+        />
+      </mesh>
+      {/* Support cables */}
+      {[-0.3, 0, 0.3].map((offset, i) => (
+        <mesh key={i} position={[distance * offset, 1.2, 0]} rotation={[0, 0, Math.PI / 2]}>
+          <cylinderGeometry args={[0.03, 0.03, 2, 4]} />
+          <meshStandardMaterial color="#2a2a3e" metalness={0.9} roughness={0.1} />
+        </mesh>
+      ))}
+    </group>
+  )
+}
+
+// Ground level shop/storefront component
+function Storefront({
+  position,
+  rotation,
+  color
+}: {
+  position: THREE.Vector3
+  rotation: number
+  color: THREE.Color
+}) {
+  return (
+    <group position={position} rotation={[0, rotation, 0]}>
+      {/* Awning */}
+      <mesh position={[0, 2.5, 0.6]}>
+        <boxGeometry args={[3, 0.1, 1.2]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.2} />
+      </mesh>
+      {/* Shop sign */}
+      <mesh position={[0, 3.2, 0]}>
+        <boxGeometry args={[2.5, 0.8, 0.1]} />
+        <meshStandardMaterial
+          color={color}
+          emissive={color}
+          emissiveIntensity={0.9}
+          toneMapped={false}
+        />
+      </mesh>
+      {/* Door */}
+      <mesh position={[0, 1, 0]}>
+        <boxGeometry args={[1.2, 2, 0.1]} />
+        <meshStandardMaterial color="#1a1a1a" metalness={0.6} roughness={0.3} />
+      </mesh>
+      {/* Door light */}
+      <mesh position={[0, 2.1, 0.1]}>
+        <boxGeometry args={[1.3, 0.2, 0.05]} />
+        <meshStandardMaterial
+          color="#00ffaa"
+          emissive="#00ffaa"
+          emissiveIntensity={1.2}
+          toneMapped={false}
+        />
+      </mesh>
+      {/* Display windows */}
+      {[-1, 1].map((side, i) => (
+        <mesh key={i} position={[side * 1.3, 1.5, 0]}>
+          <boxGeometry args={[0.8, 1.8, 0.1]} />
+          <meshStandardMaterial
+            color="#ffaa00"
+            emissive="#ffaa00"
+            emissiveIntensity={0.6}
+            transparent
+            opacity={0.7}
+          />
+        </mesh>
+      ))}
+    </group>
+  )
+}
+
+// Elevated monorail track
+function MonorailTrack({ radius, height, color }: { radius: number; height: number; color: THREE.Color }) {
+  const trainRef = useRef<THREE.Group>(null)
+
+  useFrame((state) => {
+    if (!trainRef.current) return
+    const time = state.clock.elapsedTime
+    const angle = (time * 0.3) % (Math.PI * 2)
+    trainRef.current.position.x = Math.cos(angle) * radius
+    trainRef.current.position.z = Math.sin(angle) * radius
+    trainRef.current.rotation.y = angle + Math.PI / 2
+  })
+
+  return (
+    <group>
+      {/* Track ring */}
+      <mesh position={[0, height, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[radius, 0.15, 8, 32]} />
+        <meshStandardMaterial color="#2a2a3e" metalness={0.9} roughness={0.2} />
+      </mesh>
+      {/* Track neon glow */}
+      <mesh position={[0, height, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[radius, 0.18, 8, 32]} />
+        <meshStandardMaterial
+          color={color}
+          emissive={color}
+          emissiveIntensity={0.3}
+          transparent
+          opacity={0.5}
+          toneMapped={false}
+        />
+      </mesh>
+      {/* Animated train */}
+      <group ref={trainRef} position={[radius, height, 0]}>
+        {/* Train body */}
+        <mesh>
+          <boxGeometry args={[5, 1.5, 2]} />
+          <meshStandardMaterial color="#1a1a2e" metalness={0.7} roughness={0.3} />
+        </mesh>
+        {/* Train windows */}
+        {[-1.5, -0.5, 0.5, 1.5].map((x, i) => (
+          <mesh key={i} position={[x, 0.3, 1.05]}>
+            <boxGeometry args={[0.7, 0.8, 0.05]} />
+            <meshStandardMaterial
+              color="#00ccff"
+              emissive="#00ccff"
+              emissiveIntensity={0.8}
+              toneMapped={false}
+            />
+          </mesh>
+        ))}
+        {/* Front light */}
+        <mesh position={[2.6, 0, 0]}>
+          <sphereGeometry args={[0.2, 6, 6]} />
+          <meshStandardMaterial
+            color="#ffffff"
+            emissive="#ffffff"
+            emissiveIntensity={2}
+            toneMapped={false}
+          />
+        </mesh>
+      </group>
     </group>
   )
 }
@@ -879,7 +1173,7 @@ export default function EnhancedCyberpunkCity({
   beatDetected,
   theme
 }: EnhancedCyberpunkCityProps) {
-  const buildingCount = 24
+  const buildingCount = 16 // Reduced from 24 for better performance
   const buildingRefsArray = useRef<Array<BuildingRefs & { pulsePhase: number; tempColor: THREE.Color }>>([])
   const tempColor = useMemo(() => new THREE.Color(), [])
 
@@ -912,7 +1206,7 @@ export default function EnhancedCyberpunkCity({
         const depth = baseSize
         const baseHeight = 12 + Math.random() * 35 + ring * 18
 
-        // Choose shape - all 8 types for maximum variety
+        // Choose shape - all 18 types for maximum variety
         const shape = shapes[Math.floor(Math.random() * shapes.length)]
 
         // Neon colors
@@ -936,13 +1230,78 @@ export default function EnhancedCyberpunkCity({
           baseHeight,
           color,
           pulsePhase: Math.random() * Math.PI * 2,
-          shape
+          shape,
+          angle // Store angle for skybridge calculations
         })
       }
     }
 
     return buildings
   }, [buildingCount, theme])
+
+  // Generate skybridge connections between nearby buildings
+  const skybridges = useMemo(() => {
+    const bridges = []
+    const maxDistance = 35 // Only connect buildings within this distance
+    const maxBridges = 12 // Limit total bridges for performance
+
+    // Connect buildings to create interesting network
+    for (let i = 0; i < buildingData.length && bridges.length < maxBridges; i++) {
+      // Each building connects to 1-2 nearby buildings
+      const connectionsCount = Math.random() > 0.6 ? 2 : 1
+      let connections = 0
+
+      for (let j = i + 1; j < buildingData.length && connections < connectionsCount && bridges.length < maxBridges; j++) {
+        const dist = buildingData[i].position.distanceTo(buildingData[j].position)
+
+        if (dist < maxDistance && dist > 15) { // Not too close, not too far
+          const avgHeight = (buildingData[i].baseHeight + buildingData[j].baseHeight) / 2
+          const height = avgHeight * 0.6 + Math.random() * avgHeight * 0.2 // 60-80% up the buildings
+
+          bridges.push({
+            start: new THREE.Vector3(buildingData[i].position.x, 0, buildingData[i].position.z),
+            end: new THREE.Vector3(buildingData[j].position.x, 0, buildingData[j].position.z),
+            height,
+            color: buildingData[i].color
+          })
+          connections++
+        }
+      }
+    }
+
+    return bridges
+  }, [buildingData])
+
+  // Generate ground-level storefronts around the city
+  const storefronts = useMemo(() => {
+    const shops = []
+    const shopRadius = 38 // Inner ring of shops
+    const shopCount = 20 // Reduced from 32 for better performance
+
+    for (let i = 0; i < shopCount; i++) {
+      const angle = (i / shopCount) * Math.PI * 2
+      const x = Math.cos(angle) * shopRadius
+      const z = Math.sin(angle) * shopRadius
+
+      const colors = theme ? [
+        new THREE.Color(theme.colors.primary),
+        new THREE.Color(theme.colors.secondary),
+        new THREE.Color(theme.colors.tertiary)
+      ] : [
+        new THREE.Color('#00ffff'),
+        new THREE.Color('#ff00ff'),
+        new THREE.Color('#ffaa00')
+      ]
+
+      shops.push({
+        position: new THREE.Vector3(x, 0, z),
+        rotation: angle + Math.PI, // Face inward
+        color: colors[Math.floor(Math.random() * colors.length)]
+      })
+    }
+
+    return shops
+  }, [theme])
 
   // Handle building mount - store refs for centralized animation
   const handleBuildingMount = (index: number) => (refs: BuildingRefs) => {
@@ -989,8 +1348,17 @@ export default function EnhancedCyberpunkCity({
     })
   })
 
+  // Get primary color for city-wide elements
+  const primaryColor = useMemo(() => {
+    if (theme) {
+      return new THREE.Color(theme.colors.primary)
+    }
+    return new THREE.Color('#00ffff')
+  }, [theme])
+
   return (
     <group>
+      {/* Buildings */}
       {buildingData.map((building, i) => (
         <EnhancedBuilding
           key={i}
@@ -1003,6 +1371,63 @@ export default function EnhancedCyberpunkCity({
           shape={building.shape}
           onMount={handleBuildingMount(i)}
         />
+      ))}
+
+      {/* Skybridge connections between buildings */}
+      {skybridges.map((bridge, i) => (
+        <Skybridge
+          key={`bridge-${i}`}
+          start={bridge.start}
+          end={bridge.end}
+          height={bridge.height}
+          color={bridge.color}
+          bass={bass}
+        />
+      ))}
+
+      {/* Ground-level storefronts */}
+      {storefronts.map((shop, i) => (
+        <Storefront
+          key={`shop-${i}`}
+          position={shop.position}
+          rotation={shop.rotation}
+          color={shop.color}
+        />
+      ))}
+
+      {/* Elevated monorail system */}
+      <MonorailTrack radius={50} height={25} color={primaryColor} />
+
+      {/* Underground glow layer - gives sense of depth */}
+      <mesh position={[0, -2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[35, 120, 64]} />
+        <meshStandardMaterial
+          color={primaryColor}
+          emissive={primaryColor}
+          emissiveIntensity={0.15 + bass * 0.1}
+          transparent
+          opacity={0.2}
+          side={THREE.DoubleSide}
+          toneMapped={false}
+        />
+      </mesh>
+
+      {/* Mid-level platform rings - adds layering */}
+      {[15, 30, 45].map((height, i) => (
+        <group key={`platform-${i}`}>
+          <mesh position={[0, height, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[60 + i * 10, 62 + i * 10, 32]} />
+            <meshStandardMaterial
+              color="#1a1a2e"
+              emissive={primaryColor}
+              emissiveIntensity={0.2}
+              transparent
+              opacity={0.6}
+              metalness={0.8}
+              roughness={0.2}
+            />
+          </mesh>
+        </group>
       ))}
     </group>
   )

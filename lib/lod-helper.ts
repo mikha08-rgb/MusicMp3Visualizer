@@ -88,6 +88,44 @@ export function shouldRenderByDistance(
 }
 
 /**
+ * Combined frustum + distance culling (OPTIMIZED - reuses frustum/matrix)
+ * Use this for maximum performance when checking many objects
+ *
+ * @param position - Position of the object
+ * @param camera - Three.js camera
+ * @param maxDistance - Maximum render distance
+ * @param frustum - Reusable frustum instance
+ * @param projScreenMatrix - Reusable matrix instance
+ * @param margin - Extra margin for culling (default 5)
+ */
+export function shouldRenderOptimized(
+  position: THREE.Vector3,
+  camera: THREE.Camera,
+  maxDistance: number,
+  frustum: THREE.Frustum,
+  projScreenMatrix: THREE.Matrix4,
+  margin: number = 5
+): boolean {
+  // First check distance (fast)
+  const distanceSq = camera.position.distanceToSquared(position)
+  if (distanceSq > maxDistance * maxDistance) {
+    return false
+  }
+
+  // Then check frustum (more expensive, but necessary)
+  projScreenMatrix.multiplyMatrices(
+    camera.projectionMatrix,
+    camera.matrixWorldInverse
+  )
+  frustum.setFromProjectionMatrix(projScreenMatrix)
+
+  // Create a sphere around the position with margin radius
+  const sphere = new THREE.Sphere(position, margin)
+
+  return frustum.intersectsSphere(sphere)
+}
+
+/**
  * Get quality multiplier for instance counts based on distance
  * @param distance - Distance from camera
  * @param maxDistance - Maximum distance for rendering

@@ -4,7 +4,7 @@ import { useRef, useMemo, useEffect } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import type { ColorTheme } from '@/lib/themes'
-import { shouldRenderByDistance } from '@/lib/lod-helper'
+import { shouldRenderOptimized } from '@/lib/lod-helper'
 
 interface DroneSwarmProps {
   bass: number
@@ -132,6 +132,10 @@ export default function DroneSwarm({
     if (lightsRef.current.instanceColor) lightsRef.current.instanceColor.needsUpdate = true
   }, [droneData, tempObject])
 
+  // Reusable objects for frustum culling
+  const frustum = useMemo(() => new THREE.Frustum(), [])
+  const projScreenMatrix = useMemo(() => new THREE.Matrix4(), [])
+
   // Animate drones
   const { camera } = useThree()
   useFrame((state) => {
@@ -161,9 +165,9 @@ export default function DroneSwarm({
       const y = drone.basePosition.y + heightWave + bassBoost
       const z = drone.basePosition.z + orbitZ + (beatExpand * Math.sin(angle))
 
-      // Distance-based culling for performance
+      // Combined frustum + distance culling for maximum performance
       tempVector.set(x, y, z)
-      if (!shouldRenderByDistance(tempVector, camera, MAX_RENDER_DISTANCE)) {
+      if (!shouldRenderOptimized(tempVector, camera, MAX_RENDER_DISTANCE, frustum, projScreenMatrix, 3)) {
         // Hide by scaling to zero
         tempObject.scale.set(0, 0, 0)
         tempObject.updateMatrix()
@@ -262,6 +266,7 @@ export default function DroneSwarm({
           color="#1a1a2e"
           metalness={0.9}
           roughness={0.2}
+          flatShading
         />
       </instancedMesh>
 
@@ -302,6 +307,7 @@ export default function DroneSwarm({
           opacity={0.3}
           sizeAttenuation
           blending={THREE.AdditiveBlending}
+          depthWrite={false}
         />
       </points>
     </group>

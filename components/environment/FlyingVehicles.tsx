@@ -12,7 +12,6 @@ interface FlyingVehiclesProps {
 
 interface VehicleRefs {
   groupRef: React.RefObject<THREE.Group | null>
-  lightRef: React.RefObject<THREE.PointLight | null>
   trailRef: React.RefObject<THREE.Mesh | null>
   pathRadius: number
   pathAngleOffset: number
@@ -38,14 +37,12 @@ function FlyingVehicle({
   onMount: (refs: VehicleRefs) => void
 }) {
   const groupRef = useRef<THREE.Group>(null)
-  const lightRef = useRef<THREE.PointLight>(null)
   const trailRef = useRef<THREE.Mesh>(null)
 
   useEffect(() => {
-    if (groupRef.current && lightRef.current && trailRef.current) {
+    if (groupRef.current && trailRef.current) {
       onMount({
         groupRef,
-        lightRef,
         trailRef,
         pathRadius,
         pathAngleOffset,
@@ -64,6 +61,7 @@ function FlyingVehicle({
           color="#1a1a2e"
           metalness={0.9}
           roughness={0.2}
+          flatShading
         />
       </mesh>
 
@@ -80,15 +78,21 @@ function FlyingVehicle({
         />
       </mesh>
 
-      {/* Headlights */}
-      <pointLight
-        ref={lightRef}
-        position={[size * 1.2, 0, 0]}
-        color={color}
-        intensity={2}
-        distance={10}
-        decay={2}
-      />
+      {/* Headlights - emissive mesh only for performance */}
+      <mesh position={[size * 1.2, 0, size * 0.3]}>
+        <sphereGeometry args={[0.15, 4, 4]} />
+        <meshBasicMaterial
+          color={color}
+          toneMapped={false}
+        />
+      </mesh>
+      <mesh position={[size * 1.2, 0, -size * 0.3]}>
+        <sphereGeometry args={[0.15, 4, 4]} />
+        <meshBasicMaterial
+          color={color}
+          toneMapped={false}
+        />
+      </mesh>
 
       {/* Neon underlight strips */}
       <mesh position={[0, -size * 0.3, 0]}>
@@ -110,6 +114,7 @@ function FlyingVehicle({
           opacity={0.3}
           side={THREE.DoubleSide}
           toneMapped={false}
+          depthWrite={false}
         />
       </mesh>
 
@@ -133,6 +138,7 @@ function FlyingVehicle({
           transparent
           opacity={0.6}
           sizeAttenuation
+          depthWrite={false}
         />
       </points>
 
@@ -155,6 +161,7 @@ function FlyingVehicle({
           transparent
           opacity={0.6}
           sizeAttenuation
+          depthWrite={false}
         />
       </points>
     </group>
@@ -209,7 +216,7 @@ export default function FlyingVehicles({ bass, theme }: FlyingVehiclesProps) {
     const time = state.clock.elapsedTime
 
     vehicleRefsArray.current.forEach((refs) => {
-      if (!refs?.groupRef.current || !refs.lightRef.current || !refs.trailRef.current) return
+      if (!refs?.groupRef.current || !refs.trailRef.current) return
 
       // Circular path
       const angle = refs.pathAngleOffset + time * refs.speed
@@ -220,9 +227,6 @@ export default function FlyingVehicles({ bass, theme }: FlyingVehiclesProps) {
 
       // Face direction of travel
       refs.groupRef.current.rotation.y = angle + Math.PI / 2
-
-      // Pulsing lights
-      refs.lightRef.current.intensity = 2 + Math.sin(time * 5) * 0.5
 
       // Trail opacity
       const trailMat = refs.trailRef.current.material as THREE.MeshBasicMaterial

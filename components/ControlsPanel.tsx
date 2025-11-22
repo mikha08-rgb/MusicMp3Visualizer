@@ -2,6 +2,7 @@
 
 import { Volume2, VolumeX, Maximize, Minimize, Settings, X } from 'lucide-react'
 import { useState, useCallback } from 'react'
+import type { PerformancePreset } from '@/lib/performance-helper'
 
 interface ControlsPanelProps {
   volume: number
@@ -18,6 +19,8 @@ interface ControlsPanelProps {
   onToggleParticles?: () => void
   isFullscreen?: boolean
   onToggleFullscreen?: () => void
+  performancePreset?: PerformancePreset
+  onPerformanceChange?: (preset: PerformancePreset) => void
 }
 
 export default function ControlsPanel({
@@ -35,6 +38,8 @@ export default function ControlsPanel({
   onToggleParticles,
   isFullscreen = false,
   onToggleFullscreen,
+  performancePreset = 'high',
+  onPerformanceChange,
 }: ControlsPanelProps) {
   const [showSettings, setShowSettings] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
@@ -180,6 +185,30 @@ export default function ControlsPanel({
                   className="w-4 h-4 rounded bg-white/10 border border-white/20
                     checked:bg-blue-500 checked:border-blue-500 cursor-pointer"
                 />
+              </label>
+            )}
+
+            {/* Performance Settings */}
+            <p className="text-[10px] text-white/30 uppercase tracking-wider mt-3 mb-1">Performance</p>
+
+            {onPerformanceChange && (
+              <label className="flex flex-col gap-2 cursor-pointer group">
+                <span className="text-xs text-white/70 group-hover:text-white transition-colors">
+                  Quality Preset
+                </span>
+                <select
+                  value={performancePreset}
+                  onChange={(e) => onPerformanceChange(e.target.value as PerformancePreset)}
+                  className="bg-white/5 border border-white/20 rounded-lg px-3 py-1.5 text-xs text-white
+                    hover:bg-white/10 focus:bg-white/10 focus:outline-none focus:ring-1 focus:ring-white/30
+                    cursor-pointer transition-colors"
+                >
+                  <option value="ultra" className="bg-black text-white">Ultra (Best Quality)</option>
+                  <option value="high" className="bg-black text-white">High (Recommended)</option>
+                  <option value="medium" className="bg-black text-white">Medium (Balanced)</option>
+                  <option value="low" className="bg-black text-white">Low (Performance)</option>
+                  <option value="potato" className="bg-black text-white">Potato (Minimum)</option>
+                </select>
               </label>
             )}
 

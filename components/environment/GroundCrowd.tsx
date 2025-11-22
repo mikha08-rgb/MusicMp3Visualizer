@@ -38,7 +38,7 @@ export default function GroundCrowd({
 
   // Generate crowd data
   const { peopleData, peopleCount } = useMemo(() => {
-    const count = 64 // Optimized for performance
+    const count = 48 // Reduced from 64 for better performance
     const people: PersonData[] = []
 
     // Create people at different radii (street level)
@@ -110,59 +110,107 @@ export default function GroundCrowd({
     }
   }, [peopleData, tempObject])
 
-  // Animate crowd
+  // Animate crowd with multi-level LOD for optimal performance
+  // KEY FIX: Always update position every frame for smooth movement
+  // Only throttle expensive animations (dance, bob, color) based on distance
   const { camera } = useThree()
   useFrame((state) => {
     if (!crowdRef.current) return
 
     const time = state.clock.elapsedTime
-    const MAX_RENDER_DISTANCE = 80 // Only render crowd within 80 units
+    const frameCount = Math.floor(time * 60) // Use as frame counter
 
     peopleData.forEach((person, i) => {
-      // Walk along circular path
+      // ALWAYS update position every frame - this is cheap and critical for smooth movement
       person.pathAngle += person.speed * 0.016 // ~60fps normalized
 
       const x = Math.cos(person.pathAngle) * person.pathRadius
       const z = Math.sin(person.pathAngle) * person.pathRadius
 
-      // Distance-based culling for performance - reuse vector to avoid allocation
+      // Calculate distance for LOD - reuse vector to avoid allocation
       tempVector.set(x, person.height / 2, z)
-      if (!shouldRenderByDistance(tempVector, camera, MAX_RENDER_DISTANCE)) {
-        // Hide by scaling to zero
+      const distanceSq = camera.position.distanceToSquared(tempVector)
+
+      // LOD Levels with distance-squared for faster comparison
+      const CLOSE_DIST_SQ = 30 * 30      // 0-30 units: Full detail
+      const MEDIUM_DIST_SQ = 50 * 50     // 30-50 units: Reduced animation
+      const FAR_DIST_SQ = 70 * 70        // 50-70 units: Minimal animation
+      const CULL_DIST_SQ = 80 * 80       // 70-80 units: Don't render
+
+      // LOD Level 4: Cull - Don't render
+      if (distanceSq > CULL_DIST_SQ) {
         tempObject.scale.set(0, 0, 0)
         tempObject.updateMatrix()
         crowdRef.current!.setMatrixAt(i, tempObject.matrix)
         return
       }
 
-      // Walking bob animation
-      const walkBob = Math.sin(time * 8 + person.walkPhase) * 0.05
+      // LOD Level 3: Far - Simple position only, no animations
+      if (distanceSq > FAR_DIST_SQ) {
+        // Still update position EVERY frame for smooth movement
+        const y = person.height / 2 + 0.1
+        tempObject.position.set(x, y, z)
+        tempObject.scale.set(0.3, person.height, 0.3)
+        tempObject.rotation.y = person.pathAngle + Math.PI / 2
+        tempObject.updateMatrix()
+        crowdRef.current!.setMatrixAt(i, tempObject.matrix)
+        return
+      }
 
-      // Dance on beats - jump and scale
-      const beatScale = beatDetected ? 1.2 : 1.0
-      const danceJump = beatDetected ? 0.3 : 0
-      const danceRotation = Math.sin(time * 4 + person.dancePhase) * 0.3 * bass
+      // LOD Level 2: Medium - Smooth position + simplified animations every 2 frames
+      if (distanceSq > MEDIUM_DIST_SQ) {
+        // Position ALWAYS updates for smooth movement
+        let y = person.height / 2 + 0.1
+        let beatScale = 1.0
 
-      // Arm wave with highs
-      const armWave = Math.sin(time * 6 + person.dancePhase) * highs * 0.5
+        // Only compute expensive animations every 2 frames
+        if (frameCount % 2 === 0) {
+          const walkBob = Math.sin(time * 8 + person.walkPhase) * 0.05
+          beatScale = beatDetected ? 1.1 : 1.0
+          y += walkBob
 
-      const y = person.height / 2 + 0.1 + walkBob + danceJump
+          // Update color every 2 frames
+          const colorIntensity = 0.8 + mids * 0.2
+          tempColor.copy(person.color).multiplyScalar(colorIntensity)
+          crowdRef.current!.setColorAt(i, tempColor)
+        }
 
-      tempObject.position.set(x, y, z)
-      tempObject.scale.set(
-        0.3 * beatScale,
-        person.height * beatScale,
-        0.3 * beatScale
-      )
-      tempObject.rotation.y = person.pathAngle + Math.PI / 2 + danceRotation
-      tempObject.updateMatrix()
+        tempObject.position.set(x, y, z)
+        tempObject.scale.set(0.3 * beatScale, person.height * beatScale, 0.3 * beatScale)
+        tempObject.rotation.y = person.pathAngle + Math.PI / 2
+        tempObject.updateMatrix()
+        crowdRef.current!.setMatrixAt(i, tempObject.matrix)
+        return
+      }
 
-      crowdRef.current!.setMatrixAt(i, tempObject.matrix)
+      // LOD Level 1: Close - Full detail, every frame
+      if (distanceSq <= CLOSE_DIST_SQ) {
+        // Walking bob animation
+        const walkBob = Math.sin(time * 8 + person.walkPhase) * 0.05
 
-      // Color pulse with mids
-      const colorIntensity = 0.7 + mids * 0.3
-      tempColor.copy(person.color).multiplyScalar(colorIntensity)
-      crowdRef.current!.setColorAt(i, tempColor)
+        // Dance on beats - jump and scale
+        const beatScale = beatDetected ? 1.2 : 1.0
+        const danceJump = beatDetected ? 0.3 : 0
+        const danceRotation = Math.sin(time * 4 + person.dancePhase) * 0.3 * bass
+
+        const y = person.height / 2 + 0.1 + walkBob + danceJump
+
+        tempObject.position.set(x, y, z)
+        tempObject.scale.set(
+          0.3 * beatScale,
+          person.height * beatScale,
+          0.3 * beatScale
+        )
+        tempObject.rotation.y = person.pathAngle + Math.PI / 2 + danceRotation
+        tempObject.updateMatrix()
+
+        crowdRef.current!.setMatrixAt(i, tempObject.matrix)
+
+        // Color pulse with mids
+        const colorIntensity = 0.7 + mids * 0.3
+        tempColor.copy(person.color).multiplyScalar(colorIntensity)
+        crowdRef.current!.setColorAt(i, tempColor)
+      }
     })
 
     crowdRef.current.instanceMatrix.needsUpdate = true
