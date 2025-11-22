@@ -14,6 +14,7 @@ import CyberpunkGrid from './environment/CyberpunkGrid'
 import HolographicBillboards from './environment/HolographicBillboards'
 import FlyingVehicles from './environment/FlyingVehicles'
 import StreetDetails from './environment/StreetDetails'
+import StreetFurniture from './environment/StreetFurnitureOptimized'
 import AtmosphericEffects from './environment/AtmosphericEffects'
 import GroundCrowd from './environment/GroundCrowd'
 import GroundVehicles from './environment/GroundVehicles'
@@ -22,15 +23,22 @@ import DroneSwarm from './environment/DroneSwarm'
 import CargoShips from './environment/CargoShips'
 import SkyPlatforms from './environment/SkyPlatforms'
 import ReflectivePuddles from './environment/ReflectivePuddles'
+import DistantBackdrop from './environment/DistantBackdrop'
+import DynamicCamera from './effects/DynamicCamera'
+import ScreenFlash from './effects/ScreenFlash'
+import ParticleExplosions from './effects/ParticleExplosions'
+import StrobeLights from './effects/StrobeLights'
 import type { ColorTheme } from '@/lib/themes'
 import { getPostProcessingQuality, type PerformancePreset } from '@/lib/performance-helper'
+import { AnimationManager } from '@/lib/AnimationManager'
 
 function FPSCounter({ onFPSUpdate }: { onFPSUpdate?: (fps: number) => void }) {
   const frameCountRef = useRef(0)
   const lastTimeRef = useRef(performance.now())
   const lastFrameTimeRef = useRef(performance.now())
+  const lastFPSAdjustment = useRef(0)
 
-  useFrame(() => {
+  useFrame((state) => {
     const now = performance.now()
     const deltaTime = now - lastFrameTimeRef.current
 
@@ -47,10 +55,27 @@ function FPSCounter({ onFPSUpdate }: { onFPSUpdate?: (fps: number) => void }) {
     // Update FPS every second
     if (elapsed >= 1000 && onFPSUpdate) {
       const fps = Math.round((frameCountRef.current * 1000) / elapsed)
-      onFPSUpdate(Math.min(fps, 120)) // Cap display at 120
+      const cappedFPS = Math.min(fps, 120)
+      onFPSUpdate(cappedFPS)
+
+      // Auto-adjust animation manager update rates every 2 seconds
+      if (now - lastFPSAdjustment.current > 2000) {
+        AnimationManager.adjustForFPS(cappedFPS)
+        lastFPSAdjustment.current = now
+      }
+
       frameCountRef.current = 0
       lastTimeRef.current = now
     }
+  })
+
+  return null
+}
+
+// Centralized Animation Update - replaces all individual useFrame hooks
+function AnimationController() {
+  useFrame((state, delta) => {
+    AnimationManager.update(state.clock.elapsedTime, delta, state.camera)
   })
 
   return null
@@ -143,7 +168,7 @@ function EnhancedPostProcessing({
         {/* Enhanced bloom for neon glow with bass reactivity - adaptive quality */}
         {showBloom && (
           <Bloom
-            intensity={quality.bloomIntensity + bass * 0.3}
+            intensity={quality.bloomIntensity + bass * 0.5} // Moderate reactivity - not too much
             luminanceThreshold={quality.bloomLuminanceThreshold}
             luminanceSmoothing={0.9}
             mipmapBlur
@@ -205,13 +230,44 @@ export default function MusicVisualizerScene({
         flat
       >
         <Suspense fallback={null}>
-          {/* Atmospheric fog - darker and more purple/cyan for cyberpunk feel */}
-          <fog attach="fog" args={['#0a0a1e', 40, 180]} />
+          {/* Atmospheric fog - exponential for smoother falloff, cyan-purple tint */}
+          <fogExp2 attach="fog" args={['#1a1a3e', 0.0025]} />
 
           <Lights theme={theme} bass={bass} mainLightRef={mainLightRef} />
 
           {/* FPS Counter */}
           {showFPS && <FPSCounter onFPSUpdate={onFPSUpdate} />}
+
+          {/* Centralized Animation Manager - controls all animations in single hook */}
+          <AnimationController />
+
+          {/* Subtle reactive effects - can be toggled on/off */}
+          {false && ( // DynamicCamera disabled - was too distracting
+            <DynamicCamera
+              bass={bass}
+              mids={mids}
+              highs={highs}
+              beatDetected={beatDetected}
+              isPlaying={isPlaying}
+              intensity={0.2}
+            />
+          )}
+          <ScreenFlash bass={bass} beatDetected={beatDetected} theme={theme} />
+          {showParticles && (
+            <ParticleExplosions bass={bass} beatDetected={beatDetected} theme={theme} />
+          )}
+          {false && ( // StrobeLights disabled - too much going on
+            <StrobeLights
+              bass={bass}
+              mids={mids}
+              highs={highs}
+              beatDetected={beatDetected}
+              theme={theme}
+            />
+          )}
+
+          {/* Distant Background - Ultra-lightweight 2D backdrop */}
+          <DistantBackdrop bass={bass} theme={theme} />
 
           {/* Ground Layer - Foundation */}
           <CyberpunkGrid bass={bass} theme={theme} />
@@ -248,6 +304,7 @@ export default function MusicVisualizerScene({
             theme={theme}
           />
           <StreetDetails bass={bass} theme={theme} />
+          <StreetFurniture bass={bass} theme={theme} />
 
           {/* Mid-Level Elements */}
           <HolographicBillboards
@@ -307,6 +364,7 @@ export default function MusicVisualizerScene({
             />
           )}
 
+          {/* OrbitControls re-enabled - smoother, less distracting */}
           <OrbitControls
             enableDamping
             dampingFactor={0.05}
@@ -314,7 +372,7 @@ export default function MusicVisualizerScene({
             maxDistance={100}
             maxPolarAngle={Math.PI / 2.2}
             autoRotate={isPlaying}
-            autoRotateSpeed={0.5}
+            autoRotateSpeed={0.3} // Reduced from 0.5 to 0.3 for slower rotation
           />
 
           <Environment preset="night" />
