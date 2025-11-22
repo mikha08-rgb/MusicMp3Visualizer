@@ -12,6 +12,8 @@ interface ControlsPanelProps {
   onTogglePostProcessing?: () => void
   showParticles?: boolean
   onToggleParticles?: () => void
+  isFullscreen?: boolean
+  onToggleFullscreen?: () => void
 }
 
 export default function ControlsPanel({
@@ -23,21 +25,12 @@ export default function ControlsPanel({
   onTogglePostProcessing,
   showParticles = true,
   onToggleParticles,
+  isFullscreen = false,
+  onToggleFullscreen,
 }: ControlsPanelProps) {
-  const [isFullscreen, setIsFullscreen] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
   const [previousVolume, setPreviousVolume] = useState(volume)
-
-  const toggleFullscreen = useCallback(() => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen()
-      setIsFullscreen(true)
-    } else {
-      document.exitFullscreen()
-      setIsFullscreen(false)
-    }
-  }, [])
 
   const toggleMute = useCallback(() => {
     if (isMuted) {
@@ -103,18 +96,20 @@ export default function ControlsPanel({
 
       {/* Fullscreen & Settings Buttons */}
       <div className="flex gap-2">
-        <button
-          onClick={toggleFullscreen}
-          className="bg-black/50 backdrop-blur-xl border border-white/10 rounded-xl px-3 py-3
-            text-white/60 hover:text-white hover:bg-white/5 transition-all"
-          aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-        >
-          {isFullscreen ? (
-            <Minimize className="w-4 h-4" />
-          ) : (
-            <Maximize className="w-4 h-4" />
-          )}
-        </button>
+        {onToggleFullscreen && (
+          <button
+            onClick={onToggleFullscreen}
+            className="bg-black/50 backdrop-blur-xl border border-white/10 rounded-xl px-3 py-3
+              text-white/60 hover:text-white hover:bg-white/5 transition-all"
+            aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+          >
+            {isFullscreen ? (
+              <Minimize className="w-4 h-4" />
+            ) : (
+              <Maximize className="w-4 h-4" />
+            )}
+          </button>
+        )}
 
         <button
           onClick={() => setShowSettings(!showSettings)}

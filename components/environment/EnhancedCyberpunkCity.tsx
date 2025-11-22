@@ -15,6 +15,15 @@ interface EnhancedCyberpunkCityProps {
 
 type BuildingShape = 'box' | 'cylinder' | 'pyramid' | 'stepped'
 
+// Building refs interface for centralized animation
+interface BuildingRefs {
+  buildingRef: React.RefObject<THREE.Group>
+  windowsRef: React.RefObject<THREE.InstancedMesh>
+  neonAccentRef: React.RefObject<THREE.Mesh>
+  signageRef: React.RefObject<THREE.Mesh>
+  windowData: Array<{ position: THREE.Vector3; lit: boolean; isBalcony: boolean }>
+}
+
 // Individual enhanced building with varied architecture
 function EnhancedBuilding({
   position,
@@ -23,11 +32,8 @@ function EnhancedBuilding({
   height,
   color,
   pulsePhase,
-  bass,
-  mids,
-  beatDetected,
-  theme,
-  shape
+  shape,
+  onMount
 }: {
   position: THREE.Vector3
   width: number
@@ -35,16 +41,12 @@ function EnhancedBuilding({
   height: number
   color: THREE.Color
   pulsePhase: number
-  bass: number
-  mids: number
-  beatDetected: boolean
-  theme?: ColorTheme
   shape: BuildingShape
+  onMount: (refs: BuildingRefs) => void
 }) {
   const buildingRef = useRef<THREE.Group>(null)
   const windowsRef = useRef<THREE.InstancedMesh>(null)
   const neonAccentRef = useRef<THREE.Mesh>(null)
-  const roofDetailsRef = useRef<THREE.Group>(null)
   const signageRef = useRef<THREE.Mesh>(null)
 
   const tempObject = useMemo(() => new THREE.Object3D(), [])
@@ -132,38 +134,18 @@ function EnhancedBuilding({
     }
   }, [windowData, tempObject, tempColor])
 
-  useFrame((state) => {
-    if (!buildingRef.current || !neonAccentRef.current || !signageRef.current) return
-
-    const time = state.clock.elapsedTime
-
-    // Subtle pulse with bass
-    const pulseFactor = 1 + bass * 0.03 * Math.sin(time * 2 + pulsePhase)
-    buildingRef.current.scale.y = pulseFactor
-
-    // Neon accent intensity
-    const neonIntensity = 0.5 + mids * 0.5 + (beatDetected ? 0.5 : 0)
-    const neonMat = neonAccentRef.current.material as THREE.MeshStandardMaterial
-    neonMat.emissiveIntensity = neonIntensity
-
-    // Signage flicker
-    const signageMat = signageRef.current.material as THREE.MeshStandardMaterial
-    signageMat.emissiveIntensity = 0.8 + Math.sin(time * 3 + pulsePhase) * 0.2 + bass * 0.3
-
-    // Occasional window flicker
-    if (windowsRef.current && Math.random() > 0.98) {
-      const randomWindow = Math.floor(Math.random() * windowData.length)
-      const window = windowData[randomWindow]
-      if (window.lit) {
-        const flickerIntensity = 0.5 + Math.random() * 0.5
-        tempColor.set('#ffff80').multiplyScalar(flickerIntensity)
-        windowsRef.current.setColorAt(randomWindow, tempColor)
-        if (windowsRef.current.instanceColor) {
-          windowsRef.current.instanceColor.needsUpdate = true
-        }
-      }
+  // Report refs to parent for centralized animation
+  useEffect(() => {
+    if (buildingRef.current && neonAccentRef.current && signageRef.current) {
+      onMount({
+        buildingRef,
+        windowsRef,
+        neonAccentRef,
+        signageRef,
+        windowData
+      })
     }
-  })
+  }, [])
 
   // Render different building shapes
   const renderBuilding = () => {
@@ -239,7 +221,7 @@ function EnhancedBuilding({
       </mesh>
 
       {/* Rooftop details */}
-      <group ref={roofDetailsRef} position={[0, height / 2, 0]}>
+      <group position={[0, height / 2, 0]}>
         {/* Antenna */}
         <mesh position={[0, 2, 0]}>
           <cylinderGeometry args={[0.1, 0.1, 4, 8]} />
@@ -275,12 +257,6 @@ function EnhancedBuilding({
           toneMapped={false}
         />
       </mesh>
-
-      {/* Edge glow */}
-      <lineSegments>
-        <edgesGeometry args={[new THREE.BoxGeometry(width * 1.01, height * 1.01, depth * 1.01)]} />
-        <lineBasicMaterial color={color} transparent opacity={0.15} />
-      </lineSegments>
     </group>
   )
 }
@@ -293,6 +269,8 @@ export default function EnhancedCyberpunkCity({
   theme
 }: EnhancedCyberpunkCityProps) {
   const buildingCount = 28
+  const buildingRefsArray = useRef<Array<BuildingRefs & { pulsePhase: number; tempColor: THREE.Color }>>([])
+  const tempColor = useMemo(() => new THREE.Color(), [])
 
   // Building data with varied shapes
   const buildingData = useMemo(() => {
@@ -350,6 +328,51 @@ export default function EnhancedCyberpunkCity({
     return buildings
   }, [buildingCount, theme])
 
+  // Handle building mount - store refs for centralized animation
+  const handleBuildingMount = (index: number) => (refs: BuildingRefs) => {
+    buildingRefsArray.current[index] = {
+      ...refs,
+      pulsePhase: buildingData[index].pulsePhase,
+      tempColor: new THREE.Color()
+    }
+  }
+
+  // Single useFrame hook for ALL buildings - massive performance improvement!
+  useFrame((state) => {
+    const time = state.clock.elapsedTime
+
+    buildingRefsArray.current.forEach((refs) => {
+      if (!refs?.buildingRef.current || !refs.neonAccentRef.current || !refs.signageRef.current) return
+
+      // Subtle pulse with bass
+      const pulseFactor = 1 + bass * 0.03 * Math.sin(time * 2 + refs.pulsePhase)
+      refs.buildingRef.current.scale.y = pulseFactor
+
+      // Neon accent intensity
+      const neonIntensity = 0.5 + mids * 0.5 + (beatDetected ? 0.5 : 0)
+      const neonMat = refs.neonAccentRef.current.material as THREE.MeshStandardMaterial
+      neonMat.emissiveIntensity = neonIntensity
+
+      // Signage flicker
+      const signageMat = refs.signageRef.current.material as THREE.MeshStandardMaterial
+      signageMat.emissiveIntensity = 0.8 + Math.sin(time * 3 + refs.pulsePhase) * 0.2 + bass * 0.3
+
+      // Occasional window flicker - reduced frequency for better performance
+      if (refs.windowsRef.current && refs.windowData.length > 0 && Math.random() > 0.99) {
+        const randomWindow = Math.floor(Math.random() * refs.windowData.length)
+        const window = refs.windowData[randomWindow]
+        if (window.lit) {
+          const flickerIntensity = 0.5 + Math.random() * 0.5
+          refs.tempColor.set('#ffff80').multiplyScalar(flickerIntensity)
+          refs.windowsRef.current.setColorAt(randomWindow, refs.tempColor)
+          if (refs.windowsRef.current.instanceColor) {
+            refs.windowsRef.current.instanceColor.needsUpdate = true
+          }
+        }
+      }
+    })
+  })
+
   return (
     <group>
       {buildingData.map((building, i) => (
@@ -361,11 +384,8 @@ export default function EnhancedCyberpunkCity({
           height={building.baseHeight}
           color={building.color}
           pulsePhase={building.pulsePhase}
-          bass={bass}
-          mids={mids}
-          beatDetected={beatDetected}
-          theme={theme}
           shape={building.shape}
+          onMount={handleBuildingMount(i)}
         />
       ))}
     </group>

@@ -2,26 +2,37 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useEnhancedAudioAnalyzer } from '@/hooks/useEnhancedAudioAnalyzer'
+import { useLocalStorage } from '@/hooks/useLocalStorage'
 import FileUpload from '@/components/FileUpload'
 import MusicVisualizerScene from '@/components/MusicVisualizerScene'
 import AudioControls from '@/components/AudioControls'
 import ControlsPanel from '@/components/ControlsPanel'
 import ThemePicker from '@/components/ThemePicker'
+import VisualizationModePicker from '@/components/VisualizationModePicker'
 import { FPSDisplay } from '@/components/FPSCounter'
 import { themes, type ColorTheme } from '@/lib/themes'
 
 export default function Home() {
   const [audioState, audioControls] = useEnhancedAudioAnalyzer(2048)
 
-  // UI state
-  const [volume, setVolume] = useState(0.7)
-  const [showFPS, setShowFPS] = useState(false)
+  // UI state with localStorage persistence
+  const [volume, setVolume] = useLocalStorage('visualizer-volume', 0.7)
+  const [showFPS, setShowFPS] = useLocalStorage('visualizer-showFPS', true)
+  const [showPostProcessing, setShowPostProcessing] = useLocalStorage('visualizer-postProcessing', false) // Disabled by default for max FPS
+  const [showParticles, setShowParticles] = useLocalStorage('visualizer-particles', true)
+  const [savedThemeName, setSavedThemeName] = useLocalStorage('visualizer-theme', 'cyberpunk')
+  const [visualizationMode, setVisualizationMode] = useLocalStorage<'rings' | 'spectrum'>('visualizer-mode', 'rings')
+
+  // Non-persisted state
   const [fps, setFps] = useState(0)
-  const [showPostProcessing, setShowPostProcessing] = useState(false) // Disabled by default - cleaner visuals
-  const [showParticles, setShowParticles] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
   const [isDraggingGlobal, setIsDraggingGlobal] = useState(false)
-  const [currentTheme, setCurrentTheme] = useState<ColorTheme>(themes[1]) // Cyberpunk - more vibrant
+  const [isFullscreen, setIsFullscreen] = useState(false)
+
+  // Load theme from saved name
+  const [currentTheme, setCurrentTheme] = useState<ColorTheme>(() => {
+    return themes.find(t => t.name.toLowerCase().replace(' ', '') === savedThemeName) || themes[1]
+  })
 
   const handleFileSelect = useCallback(async (file: File) => {
     setIsLoading(true)
@@ -49,6 +60,33 @@ export default function Home() {
     audioControls.setVolume(volume)
   }, [audioControls, volume])
 
+  // Fullscreen toggle
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen()
+      setIsFullscreen(true)
+    } else {
+      document.exitFullscreen()
+      setIsFullscreen(false)
+    }
+  }, [])
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  }, [])
+
+  // Handle theme changes and save to localStorage
+  const handleThemeChange = useCallback((theme: ColorTheme) => {
+    setCurrentTheme(theme)
+    setSavedThemeName(theme.name.toLowerCase().replace(' ', ''))
+  }, [setSavedThemeName])
+
   const hasAudio = audioState.audioFile !== null
 
   // Keyboard controls
@@ -59,11 +97,17 @@ export default function Home() {
         e.preventDefault()
         audioControls.togglePlayPause()
       }
+      // Fullscreen with F key
+      if (e.code === 'KeyF') {
+        e.preventDefault()
+        toggleFullscreen()
+      }
+      // Exit fullscreen with Escape (handled by browser, but we track it)
     }
 
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [audioState.audioFile, audioControls])
+  }, [audioState.audioFile, audioControls, toggleFullscreen])
 
   // Global drag and drop
   useEffect(() => {
@@ -158,18 +202,23 @@ export default function Home() {
           showFPS={showFPS}
           onFPSUpdate={setFps}
           theme={currentTheme}
+          visualizationMode={visualizationMode}
         />
       )}
 
       {/* FPS Display */}
       {hasAudio && showFPS && <FPSDisplay fps={fps} />}
 
-      {/* Theme Picker & Controls Panel */}
+      {/* Theme Picker, Mode Picker & Controls Panel */}
       {hasAudio && (
         <div className="absolute top-6 right-6 z-20 flex flex-col gap-3">
+          <VisualizationModePicker
+            currentMode={visualizationMode}
+            onModeChange={setVisualizationMode}
+          />
           <ThemePicker
             currentTheme={currentTheme}
-            onThemeChange={setCurrentTheme}
+            onThemeChange={handleThemeChange}
           />
           <ControlsPanel
             volume={volume}
@@ -180,6 +229,8 @@ export default function Home() {
             onTogglePostProcessing={() => setShowPostProcessing(!showPostProcessing)}
             showParticles={showParticles}
             onToggleParticles={() => setShowParticles(!showParticles)}
+            isFullscreen={isFullscreen}
+            onToggleFullscreen={toggleFullscreen}
           />
         </div>
       )}
@@ -202,6 +253,7 @@ export default function Home() {
               <li>• Drag: Rotate view</li>
               <li>• Scroll: Zoom</li>
               <li>• Space: Play/pause</li>
+              <li>• F: Fullscreen</li>
             </ul>
           </div>
         </div>
