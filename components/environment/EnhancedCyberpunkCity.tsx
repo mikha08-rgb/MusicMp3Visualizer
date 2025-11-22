@@ -13,7 +13,7 @@ interface EnhancedCyberpunkCityProps {
   theme?: ColorTheme
 }
 
-type BuildingShape = 'box' | 'cylinder' | 'pyramid' | 'stepped' | 'neo-gothic' | 'brutalist' | 'organic' | 'modular'
+type BuildingShape = 'box' | 'cylinder' | 'pyramid' | 'stepped' | 'neo-gothic' | 'brutalist' | 'organic' | 'modular' | 'art-deco' | 'crystalline' | 'twisted' | 'biomechanical' | 'holographic' | 'industrial' | 'pagoda' | 'fortress' | 'blade' | 'cluster'
 
 // Building refs interface for centralized animation
 interface BuildingRefs {
@@ -268,6 +268,424 @@ function EnhancedBuilding({
             </mesh>
           </>
         )
+      case 'art-deco':
+        return (
+          <>
+            {/* Base tier - widest */}
+            <mesh castShadow receiveShadow position={[0, -height * 0.35, 0]}>
+              <boxGeometry args={[width * 1.3, height * 0.3, depth * 1.3]} />
+              <meshStandardMaterial color="#1a1520" roughness={0.3} metalness={0.8} />
+            </mesh>
+            {/* Second tier */}
+            <mesh castShadow receiveShadow position={[0, -height * 0.1, 0]}>
+              <boxGeometry args={[width * 1.1, height * 0.3, depth * 1.1]} />
+              <meshStandardMaterial color="#0a0a1a" roughness={0.3} metalness={0.8} />
+            </mesh>
+            {/* Main tower */}
+            <mesh castShadow receiveShadow position={[0, height * 0.15, 0]}>
+              <boxGeometry args={[width, height * 0.4, depth]} />
+              <meshStandardMaterial color="#0a0a1a" roughness={0.2} metalness={0.9} />
+            </mesh>
+            {/* Ornate spire */}
+            <mesh castShadow position={[0, height * 0.55, 0]}>
+              <coneGeometry args={[width * 0.5, height * 0.3, 8]} />
+              <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.4} />
+            </mesh>
+            {/* Decorative corner pillars */}
+            {[[-1, 1], [-1, -1], [1, 1], [1, -1]].map(([x, z], i) => (
+              <mesh key={i} position={[x * width * 0.5, 0, z * depth * 0.5]}>
+                <boxGeometry args={[0.3, height * 0.85, 0.3]} />
+                <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.3} />
+              </mesh>
+            ))}
+          </>
+        )
+      case 'crystalline':
+        return (
+          <>
+            {/* Faceted crystal structure */}
+            <mesh castShadow receiveShadow>
+              <octahedronGeometry args={[width * 0.8, 2]} />
+              <meshStandardMaterial
+                color={color}
+                emissive={color}
+                emissiveIntensity={0.2}
+                roughness={0.1}
+                metalness={0.95}
+                transparent
+                opacity={0.9}
+              />
+            </mesh>
+            {/* Inner core */}
+            <mesh position={[0, 0, 0]}>
+              <octahedronGeometry args={[width * 0.5, 1]} />
+              <meshStandardMaterial
+                color={color}
+                emissive={color}
+                emissiveIntensity={1.0}
+                roughness={0.0}
+                metalness={1.0}
+                toneMapped={false}
+              />
+            </mesh>
+            {/* Sharp vertical shards */}
+            {[0, 1, 2, 3].map((i) => {
+              const angle = (i / 4) * Math.PI * 2
+              return (
+                <mesh
+                  key={i}
+                  position={[Math.cos(angle) * width * 0.6, height * 0.3, Math.sin(angle) * width * 0.6]}
+                  rotation={[0, angle, Math.PI / 6]}
+                >
+                  <coneGeometry args={[0.2, height * 0.4, 4]} />
+                  <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.5} />
+                </mesh>
+              )
+            })}
+          </>
+        )
+      case 'twisted':
+        return (
+          <>
+            {/* Multiple rotating floors */}
+            {[0, 1, 2, 3, 4].map((floor) => {
+              const floorHeight = (floor / 5) * height - height * 0.4
+              const rotation = (floor / 5) * Math.PI * 0.5
+              return (
+                <mesh
+                  key={floor}
+                  castShadow
+                  receiveShadow
+                  position={[0, floorHeight, 0]}
+                  rotation={[0, rotation, 0]}
+                >
+                  <boxGeometry args={[width * 1.1, height * 0.25, depth * 1.1]} />
+                  <meshStandardMaterial color="#0a0a1a" roughness={0.3} metalness={0.8} />
+                </mesh>
+              )
+            })}
+            {/* Helical spine */}
+            <mesh>
+              <cylinderGeometry args={[width * 0.15, width * 0.15, height * 1.1, 8]} />
+              <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.6} />
+            </mesh>
+          </>
+        )
+      case 'biomechanical':
+        return (
+          <>
+            {/* Organic main body */}
+            <mesh castShadow receiveShadow>
+              <sphereGeometry args={[width * 0.7, 8, 12]} />
+              <meshStandardMaterial color="#1a1a2e" roughness={0.5} metalness={0.6} />
+            </mesh>
+            {/* Mechanical extensions */}
+            <mesh castShadow position={[0, height * 0.3, 0]}>
+              <cylinderGeometry args={[width * 0.5, width * 0.3, height * 0.5, 8]} />
+              <meshStandardMaterial color="#0a0a1a" roughness={0.4} metalness={0.8} />
+            </mesh>
+            {/* Tentacle-like protrusions */}
+            {[0, 1, 2, 3, 4, 5].map((i) => {
+              const angle = (i / 6) * Math.PI * 2
+              const radius = width * 0.6
+              return (
+                <group key={i} rotation={[0, angle, 0]}>
+                  <mesh position={[radius, -height * 0.1, 0]} rotation={[0, 0, Math.PI / 4]}>
+                    <cylinderGeometry args={[0.15, 0.3, height * 0.4, 6]} />
+                    <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.3} />
+                  </mesh>
+                  {/* Glowing tips */}
+                  <mesh position={[radius + 0.8, -height * 0.3, 0]}>
+                    <sphereGeometry args={[0.2, 6, 6]} />
+                    <meshStandardMaterial
+                      color={color}
+                      emissive={color}
+                      emissiveIntensity={1.5}
+                      toneMapped={false}
+                    />
+                  </mesh>
+                </group>
+              )
+            })}
+          </>
+        )
+      case 'holographic':
+        return (
+          <>
+            {/* Solid base */}
+            <mesh castShadow receiveShadow position={[0, -height * 0.4, 0]}>
+              <boxGeometry args={[width, height * 0.2, depth]} />
+              <meshStandardMaterial color="#0a0a1a" roughness={0.2} metalness={0.9} />
+            </mesh>
+            {/* Translucent floating layers */}
+            {[0, 1, 2, 3].map((layer) => {
+              const layerY = -height * 0.2 + (layer / 3) * height * 0.7
+              return (
+                <mesh key={layer} position={[0, layerY, 0]}>
+                  <boxGeometry args={[width * 0.9, height * 0.15, depth * 0.9]} />
+                  <meshStandardMaterial
+                    color={color}
+                    emissive={color}
+                    emissiveIntensity={0.6}
+                    transparent
+                    opacity={0.3 + (layer * 0.1)}
+                    roughness={0.1}
+                    metalness={0.9}
+                  />
+                </mesh>
+              )
+            })}
+            {/* Energy field frame */}
+            <mesh position={[0, height * 0.1, 0]}>
+              <boxGeometry args={[width * 1.05, height * 0.9, depth * 1.05]} />
+              <meshStandardMaterial
+                color={color}
+                emissive={color}
+                emissiveIntensity={0.8}
+                wireframe
+                toneMapped={false}
+              />
+            </mesh>
+          </>
+        )
+      case 'industrial':
+        return (
+          <>
+            {/* Main factory structure */}
+            <mesh castShadow receiveShadow>
+              <boxGeometry args={[width * 1.2, height * 0.6, depth * 1.2]} />
+              <meshStandardMaterial color="#2a2a1a" roughness={0.9} metalness={0.3} />
+            </mesh>
+            {/* Smokestack towers */}
+            {[-1, 0, 1].map((offset) => (
+              <mesh key={offset} castShadow position={[offset * width * 0.4, height * 0.5, depth * 0.3]}>
+                <cylinderGeometry args={[0.25, 0.3, height * 0.8, 8]} />
+                <meshStandardMaterial color="#1a1a1a" roughness={0.8} metalness={0.4} />
+              </mesh>
+            ))}
+            {/* Exposed pipes */}
+            {[0, 1, 2].map((i) => (
+              <mesh key={i} position={[-width * 0.6, -height * 0.2 + i * 1.5, 0]} rotation={[0, 0, Math.PI / 2]}>
+                <cylinderGeometry args={[0.15, 0.15, width * 0.8, 6]} />
+                <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.3} metalness={0.9} />
+              </mesh>
+            ))}
+            {/* Tank structures */}
+            <mesh position={[width * 0.5, height * 0.2, -depth * 0.4]}>
+              <cylinderGeometry args={[0.6, 0.6, height * 0.4, 12]} />
+              <meshStandardMaterial color="#1a2a1a" roughness={0.7} metalness={0.5} />
+            </mesh>
+            {/* Scaffolding */}
+            <mesh position={[0, 0, 0]}>
+              <boxGeometry args={[width * 1.25, height * 0.65, depth * 1.25]} />
+              <meshStandardMaterial
+                color="#333333"
+                wireframe
+                opacity={0.5}
+                transparent
+              />
+            </mesh>
+          </>
+        )
+      case 'pagoda':
+        return (
+          <>
+            {/* Multiple tiered roofs */}
+            {[0, 1, 2, 3].map((tier) => {
+              const tierY = -height * 0.4 + (tier / 3) * height * 0.8
+              const tierScale = 1.2 - (tier * 0.15)
+              return (
+                <group key={tier} position={[0, tierY, 0]}>
+                  {/* Floor */}
+                  <mesh castShadow receiveShadow>
+                    <cylinderGeometry args={[width * tierScale * 0.8, width * tierScale * 0.8, height * 0.15, 8]} />
+                    <meshStandardMaterial color="#0a0a1a" roughness={0.4} metalness={0.7} />
+                  </mesh>
+                  {/* Curved roof */}
+                  <mesh castShadow position={[0, height * 0.12, 0]}>
+                    <coneGeometry args={[width * tierScale, height * 0.12, 8]} />
+                    <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.3} roughness={0.5} />
+                  </mesh>
+                  {/* Upturned eaves corners */}
+                  {[0, 1, 2, 3].map((corner) => {
+                    const angle = (corner / 4) * Math.PI * 2 + Math.PI / 4
+                    return (
+                      <mesh
+                        key={corner}
+                        position={[
+                          Math.cos(angle) * width * tierScale * 0.9,
+                          height * 0.15,
+                          Math.sin(angle) * width * tierScale * 0.9
+                        ]}
+                        rotation={[Math.PI / 4, angle, 0]}
+                      >
+                        <coneGeometry args={[0.1, 0.5, 4]} />
+                        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.5} />
+                      </mesh>
+                    )
+                  })}
+                </group>
+              )
+            })}
+          </>
+        )
+      case 'fortress':
+        return (
+          <>
+            {/* Thick main walls */}
+            <mesh castShadow receiveShadow>
+              <boxGeometry args={[width * 1.3, height * 0.7, depth * 1.3]} />
+              <meshStandardMaterial color="#1a1a1a" roughness={0.9} metalness={0.2} />
+            </mesh>
+            {/* Corner turrets */}
+            {[[-1, -1], [-1, 1], [1, -1], [1, 1]].map(([x, z], i) => (
+              <mesh
+                key={i}
+                castShadow
+                position={[x * width * 0.7, height * 0.1, z * depth * 0.7]}
+              >
+                <cylinderGeometry args={[0.4, 0.5, height * 0.9, 8]} />
+                <meshStandardMaterial color="#0a0a1a" roughness={0.8} metalness={0.3} />
+              </mesh>
+            ))}
+            {/* Battlements on top */}
+            {[-1, -0.5, 0, 0.5, 1].map((offset, i) => (
+              <mesh key={i} castShadow position={[offset * width * 0.5, height * 0.4, depth * 0.65]}>
+                <boxGeometry args={[width * 0.15, height * 0.1, depth * 0.15]} />
+                <meshStandardMaterial color="#2a2a2a" roughness={0.8} metalness={0.3} />
+              </mesh>
+            ))}
+            {/* Fortified gate */}
+            <mesh position={[0, -height * 0.2, depth * 0.65]}>
+              <boxGeometry args={[width * 0.4, height * 0.4, 0.2]} />
+              <meshStandardMaterial
+                color={color}
+                emissive={color}
+                emissiveIntensity={0.5}
+                roughness={0.6}
+              />
+            </mesh>
+            {/* Defensive lights */}
+            {[[-1, -1], [-1, 1], [1, -1], [1, 1]].map(([x, z], i) => (
+              <mesh
+                key={`light-${i}`}
+                position={[x * width * 0.7, height * 0.5, z * depth * 0.7]}
+              >
+                <sphereGeometry args={[0.15, 6, 6]} />
+                <meshStandardMaterial
+                  color={color}
+                  emissive={color}
+                  emissiveIntensity={1.2}
+                  toneMapped={false}
+                />
+              </mesh>
+            ))}
+          </>
+        )
+      case 'blade':
+        return (
+          <>
+            {/* Ultra-thin main structure */}
+            <mesh castShadow receiveShadow>
+              <boxGeometry args={[width * 0.2, height, depth * 1.5]} />
+              <meshStandardMaterial color="#0a0a1a" roughness={0.1} metalness={0.95} />
+            </mesh>
+            {/* Sharp edge accent */}
+            <mesh position={[0, 0, 0]}>
+              <boxGeometry args={[width * 0.25, height * 1.05, depth * 0.05]} />
+              <meshStandardMaterial
+                color={color}
+                emissive={color}
+                emissiveIntensity={0.8}
+                toneMapped={false}
+              />
+            </mesh>
+            {/* Stabilizing base */}
+            <mesh castShadow receiveShadow position={[0, -height * 0.45, 0]}>
+              <boxGeometry args={[width * 1.2, height * 0.1, depth * 1.8]} />
+              <meshStandardMaterial color="#1a1a2e" roughness={0.3} metalness={0.8} />
+            </mesh>
+            {/* Vertical energy strips */}
+            {[-0.7, -0.3, 0.3, 0.7].map((zOffset, i) => (
+              <mesh key={i} position={[width * 0.12, 0, zOffset * depth]}>
+                <boxGeometry args={[0.02, height * 0.95, depth * 0.08]} />
+                <meshStandardMaterial
+                  color={color}
+                  emissive={color}
+                  emissiveIntensity={1.0 - (i * 0.15)}
+                  toneMapped={false}
+                />
+              </mesh>
+            ))}
+          </>
+        )
+      case 'cluster':
+        return (
+          <>
+            {/* Central hub */}
+            <mesh castShadow receiveShadow>
+              <sphereGeometry args={[width * 0.6, 8, 8]} />
+              <meshStandardMaterial color="#0a0a1a" roughness={0.3} metalness={0.8} />
+            </mesh>
+            {/* Connected pod modules */}
+            {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => {
+              const angle = (i / 8) * Math.PI * 2
+              const verticalOffset = Math.sin(i) * height * 0.2
+              const radius = width * 1.2
+              const podSize = 0.3 + (i % 3) * 0.15
+              return (
+                <group key={i}>
+                  {/* Connecting tube */}
+                  <mesh
+                    position={[
+                      Math.cos(angle) * radius * 0.5,
+                      verticalOffset,
+                      Math.sin(angle) * radius * 0.5
+                    ]}
+                    rotation={[0, angle, Math.PI / 2]}
+                  >
+                    <cylinderGeometry args={[0.1, 0.1, radius * 0.7, 6]} />
+                    <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.3} />
+                  </mesh>
+                  {/* Pod */}
+                  <mesh
+                    castShadow
+                    position={[
+                      Math.cos(angle) * radius,
+                      verticalOffset,
+                      Math.sin(angle) * radius
+                    ]}
+                  >
+                    <sphereGeometry args={[podSize, 6, 6]} />
+                    <meshStandardMaterial
+                      color="#1a1a2e"
+                      emissive={color}
+                      emissiveIntensity={0.2}
+                      roughness={0.4}
+                      metalness={0.7}
+                    />
+                  </mesh>
+                  {/* Pod light */}
+                  <mesh
+                    position={[
+                      Math.cos(angle) * radius,
+                      verticalOffset,
+                      Math.sin(angle) * radius
+                    ]}
+                  >
+                    <sphereGeometry args={[podSize * 0.4, 4, 4]} />
+                    <meshStandardMaterial
+                      color={color}
+                      emissive={color}
+                      emissiveIntensity={1.0}
+                      toneMapped={false}
+                    />
+                  </mesh>
+                </group>
+              )
+            })}
+          </>
+        )
       default: // box
         return (
           <mesh castShadow receiveShadow>
@@ -473,7 +891,10 @@ export default function EnhancedCyberpunkCity({
     const buildingsPerRing = buildingCount / rings
     const shapes: BuildingShape[] = [
       'box', 'cylinder', 'pyramid', 'stepped',
-      'neo-gothic', 'brutalist', 'organic', 'modular'
+      'neo-gothic', 'brutalist', 'organic', 'modular',
+      'art-deco', 'crystalline', 'twisted', 'biomechanical',
+      'holographic', 'industrial', 'pagoda', 'fortress',
+      'blade', 'cluster'
     ]
 
     for (let ring = 0; ring < rings; ring++) {
