@@ -53,7 +53,7 @@ export default function GroundCrowd({
 
         // Varying person attributes
         const height = 1.5 + Math.random() * 0.4
-        const speed = 0.1 + Math.random() * 0.15
+        const speed = 0.02 + Math.random() * 0.03 // Reduced speed by 80% for calmer movement
 
         // Person colors (clothing)
         let color: THREE.Color

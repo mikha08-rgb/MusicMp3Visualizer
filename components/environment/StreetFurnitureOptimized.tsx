@@ -18,7 +18,6 @@ export default function StreetFurniture({ bass, theme }: StreetFurnitureProps) {
   // Refs for instanced meshes
   const lampsRef = useRef<THREE.Group>(null)
   const lampLightsRef = useRef<THREE.InstancedMesh>(null)
-  const trashBinsRef = useRef<THREE.InstancedMesh>(null)
   const benchesRef = useRef<THREE.InstancedMesh>(null)
   const vendingMachinesRef = useRef<THREE.Group>(null)
   const vendingScreensRef = useRef<THREE.InstancedMesh>(null)
@@ -44,17 +43,6 @@ export default function StreetFurniture({ bass, theme }: StreetFurnitureProps) {
         position: new THREE.Vector3(Math.cos(angle) * radius, 0, Math.sin(angle) * radius),
         color: i % 2 === 0 ? primaryColor.clone() : secondaryColor.clone(),
         phase: Math.random() * Math.PI * 2
-      })
-    }
-
-    // Trash bins - 16 total
-    const trash = []
-    for (let i = 0; i < 16; i++) {
-      const angle = (i / 16 + 0.05) * Math.PI * 2
-      const radius = innerRadius + 1 + Math.random() * 2
-      trash.push({
-        position: new THREE.Vector3(Math.cos(angle) * radius, 0, Math.sin(angle) * radius),
-        rotation: Math.random() * Math.PI * 2
       })
     }
 
@@ -104,7 +92,7 @@ export default function StreetFurniture({ bass, theme }: StreetFurnitureProps) {
       })
     }
 
-    return { lamps, trash, benches, vending, ads, barriers }
+    return { lamps, benches, vending, ads, barriers }
   }, [primaryColor, secondaryColor, tertiaryColor])
 
   // Initialize lamp lights (instanced)
@@ -125,22 +113,6 @@ export default function StreetFurniture({ bass, theme }: StreetFurnitureProps) {
       lampLightsRef.current.instanceColor.needsUpdate = true
     }
   }, [furnitureData.lamps, tempObject])
-
-  // Initialize trash bins (instanced)
-  useEffect(() => {
-    if (!trashBinsRef.current) return
-
-    furnitureData.trash.forEach((bin, i) => {
-      tempObject.position.copy(bin.position)
-      tempObject.position.y = 0.5
-      tempObject.rotation.set(0, bin.rotation, 0)
-      tempObject.scale.set(0.3, 1, 0.3)
-      tempObject.updateMatrix()
-      trashBinsRef.current!.setMatrixAt(i, tempObject.matrix)
-    })
-
-    trashBinsRef.current.instanceMatrix.needsUpdate = true
-  }, [furnitureData.trash, tempObject])
 
   // Initialize benches (instanced)
   useEffect(() => {
@@ -301,12 +273,6 @@ export default function StreetFurniture({ bass, theme }: StreetFurnitureProps) {
           />
         </instancedMesh>
       </group>
-
-      {/* Trash Bins - Instanced */}
-      <instancedMesh ref={trashBinsRef} args={[undefined, undefined, furnitureData.trash.length]}>
-        <cylinderGeometry args={[1, 1.2, 1, 8]} />
-        <meshStandardMaterial color="#2a2a2a" metalness={0.4} roughness={0.8} />
-      </instancedMesh>
 
       {/* Benches - Instanced */}
       <instancedMesh ref={benchesRef} args={[undefined, undefined, furnitureData.benches.length]}>
