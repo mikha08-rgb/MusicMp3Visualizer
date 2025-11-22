@@ -176,8 +176,8 @@ function EnhancedPostProcessing({
         {/* Enhanced bloom for neon glow with bass reactivity - adaptive quality */}
         {showBloom && (
           <Bloom
-            intensity={quality.bloomIntensity + bass * 0.5} // Moderate reactivity - not too much
-            luminanceThreshold={quality.bloomLuminanceThreshold}
+            intensity={quality.bloomIntensity * 0.4} // Drastically reduced - was too bright
+            luminanceThreshold={0.9} // Increased threshold - only brightest things glow
             luminanceSmoothing={0.9}
             mipmapBlur
           />
