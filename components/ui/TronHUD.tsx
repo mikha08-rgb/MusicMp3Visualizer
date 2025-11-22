@@ -37,10 +37,10 @@ function ScanningRing({
     // Rotate slowly
     ringRef.current.rotation.z += 0.005
 
-    // Fade in/out
+    // Very subtle fade in/out
     const material = ringRef.current.material as THREE.MeshStandardMaterial
     const pulse = Math.sin(time * speed) * 0.5 + 0.5
-    material.opacity = pulse * 0.4 + 0.2
+    material.opacity = pulse * 0.15 + 0.1 // Reduced from 0.4/0.2 to 0.15/0.1
   })
 
   return (
@@ -49,9 +49,9 @@ function ScanningRing({
       <meshStandardMaterial
         color={color}
         emissive={color}
-        emissiveIntensity={2}
+        emissiveIntensity={1} // Reduced from 2
         transparent
-        opacity={0.4}
+        opacity={0.3} // Reduced from 0.4
         side={THREE.DoubleSide}
       />
     </mesh>
@@ -138,9 +138,9 @@ function StatusIndicator({
         <meshStandardMaterial
           color={color}
           emissive={color}
-          emissiveIntensity={3}
+          emissiveIntensity={1.5} // Reduced from 3
           transparent
-          opacity={0.8}
+          opacity={0.6} // Reduced from 0.8
         />
       </mesh>
 
@@ -150,7 +150,7 @@ function StatusIndicator({
         <meshStandardMaterial
           color={color}
           emissive={color}
-          emissiveIntensity={4}
+          emissiveIntensity={2} // Reduced from 4
         />
       </mesh>
     </group>

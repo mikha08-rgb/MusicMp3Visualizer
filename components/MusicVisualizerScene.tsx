@@ -260,8 +260,10 @@ export default function MusicVisualizerScene({
               intensity={0.2}
             />
           )}
-          <ScreenFlash bass={bass} beatDetected={beatDetected} theme={theme} />
-          {showParticles && (
+          {false && ( // ScreenFlash disabled - too overwhelming
+            <ScreenFlash bass={bass} beatDetected={beatDetected} theme={theme} />
+          )}
+          {false && showParticles && ( // ParticleExplosions disabled - too much flashing
             <ParticleExplosions bass={bass} beatDetected={beatDetected} theme={theme} />
           )}
           {false && ( // StrobeLights disabled - too much going on

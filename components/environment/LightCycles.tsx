@@ -43,7 +43,7 @@ function LightCycle({
       new THREE.MeshStandardMaterial({
         color: color,
         emissive: color,
-        emissiveIntensity: 2,
+        emissiveIntensity: 1, // Reduced from 2
         metalness: 0.8,
         roughness: 0.2,
       })
@@ -56,7 +56,7 @@ function LightCycle({
       new THREE.MeshStandardMaterial({
         color: color,
         emissive: color,
-        emissiveIntensity: 3,
+        emissiveIntensity: 1.5, // Reduced from 3
         transparent: true,
         opacity: 0.9,
       })
@@ -71,7 +71,7 @@ function LightCycle({
       new THREE.MeshStandardMaterial({
         color: color,
         emissive: color,
-        emissiveIntensity: 4,
+        emissiveIntensity: 2, // Reduced from 4
         transparent: true,
         opacity: 0.8,
       })
@@ -103,10 +103,11 @@ function LightCycle({
     // Face direction of movement
     cycleRef.current.rotation.y = angle + Math.PI / 2
 
-    // Pulse intensity with bass
+    // Very subtle pulse intensity with bass
     cycleRef.current.traverse((child) => {
       if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
-        child.material.emissiveIntensity = child.material.emissiveIntensity * (1 + bass * 0.3)
+        const baseIntensity = child === lightBar1 || child === lightBar2 ? 2 : 1.5
+        child.material.emissiveIntensity = baseIntensity * (1 + bass * 0.1) // Reduced from 0.3 to 0.1
       }
     })
 

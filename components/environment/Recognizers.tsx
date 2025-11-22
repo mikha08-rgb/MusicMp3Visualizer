@@ -149,13 +149,12 @@ function Recognizer({
     recognizerRef.current.rotation.x = Math.sin(time * 0.3) * 0.05
     recognizerRef.current.rotation.z = Math.cos(time * 0.4) * 0.05
 
-    // Pulse lights with bass
+    // Very subtle pulse lights with bass
     recognizerRef.current.traverse((child) => {
       if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
         if (child.material.emissiveIntensity > 2) {
-          // Only pulse the bright lights
-          const basePulse = child.material.emissiveIntensity
-          child.material.emissiveIntensity = basePulse * (1 + bass * 0.4)
+          // Only pulse the bright lights, very gently
+          child.material.emissiveIntensity = child.material.emissiveIntensity * (1 + bass * 0.05) // Reduced from 0.4 to 0.05
         }
       }
     })

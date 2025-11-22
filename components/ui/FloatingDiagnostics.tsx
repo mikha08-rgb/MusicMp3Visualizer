@@ -125,7 +125,7 @@ function DiagnosticPanel({
         <meshStandardMaterial
           color={color}
           emissive={color}
-          emissiveIntensity={2}
+          emissiveIntensity={1} // Reduced from 2
           transparent
           opacity={0.8}
         />
@@ -143,7 +143,7 @@ function DiagnosticPanel({
           <meshStandardMaterial
             color={color}
             emissive={color}
-            emissiveIntensity={3}
+            emissiveIntensity={1.5} // Reduced from 3
           />
         </mesh>
       ))}
