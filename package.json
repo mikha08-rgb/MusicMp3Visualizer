@@ -24,6 +24,7 @@
     "three": "^0.181.2"
   },
   "devDependencies": {
+    "@types/gtag.js": "^0.0.20",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
