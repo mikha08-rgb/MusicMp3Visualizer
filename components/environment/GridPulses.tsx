@@ -1,9 +1,10 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
-import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import type { ColorTheme } from '@/lib/themes'
+import { geometries } from '@/lib/geometry-library'
+import { AnimationManager } from '@/lib/AnimationManager'
 
 interface PulseData {
   id: number
@@ -66,40 +67,51 @@ export default function GridPulses({ bass, beatDetected, theme }: GridPulsesProp
   )
 }
 
-// Individual expanding ring pulse
+// Individual expanding ring pulse - optimized with AnimationManager
 function ExpandingRing({ pulse }: { pulse: PulseData }) {
   const ringRef = useRef<THREE.Mesh>(null)
   const materialRef = useRef<THREE.MeshStandardMaterial>(null)
 
-  useFrame(() => {
-    if (!ringRef.current || !materialRef.current) return
+  // Migrated to AnimationManager
+  useEffect(() => {
+    const unregister = AnimationManager.register(
+      `grid-pulse-${pulse.id}`,
+      () => {
+        if (!ringRef.current || !materialRef.current) return
 
-    const elapsed = (performance.now() - pulse.startTime) / 1000
-    const progress = Math.min(elapsed * pulse.speed / pulse.maxRadius, 1)
+        const elapsed = (performance.now() - pulse.startTime) / 1000
+        const progress = Math.min(elapsed * pulse.speed / pulse.maxRadius, 1)
 
-    // Expand ring
-    const currentRadius = progress * pulse.maxRadius
-    ringRef.current.scale.set(currentRadius, currentRadius, 1)
+        // Expand ring
+        const currentRadius = progress * pulse.maxRadius
+        ringRef.current.scale.set(currentRadius, currentRadius, 1)
 
-    // Fade out as it expands
-    const opacity = Math.max(0, 1 - progress)
-    materialRef.current.opacity = opacity * 0.7
+        // Fade out as it expands
+        const opacity = Math.max(0, 1 - progress)
+        materialRef.current.opacity = opacity * 0.7
 
-    // Intensity pulse
-    materialRef.current.emissiveIntensity = (1 - progress) * 4 + 1
-  })
+        // Intensity pulse
+        materialRef.current.emissiveIntensity = (1 - progress) * 4 + 1
+      },
+      'medium', // Medium priority - visual effect
+      60 // 60 Hz - smooth expansion
+    )
+
+    return unregister
+  }, [pulse.id, pulse.startTime, pulse.speed, pulse.maxRadius])
 
   return (
     <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]}>
-      <ringGeometry args={[0.95, 1.0, 32]} />
-      <meshStandardMaterial
+      {/* OPTIMIZATION: Use shared ring geometry from library */}
+      <primitive object={geometries.ring.medium} />
+      {/* ULTRA-OPTIMIZATION: MeshBasic for glowing pulses */}
+      <meshBasicMaterial
         ref={materialRef}
         color={pulse.color}
-        emissive={pulse.color}
-        emissiveIntensity={4}
         transparent
         opacity={0.7}
         side={THREE.DoubleSide}
+        toneMapped={false}
       />
     </mesh>
   )

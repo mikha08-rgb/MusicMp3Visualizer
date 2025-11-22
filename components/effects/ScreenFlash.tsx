@@ -1,9 +1,9 @@
 'use client'
 
-import { useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useRef, useEffect } from 'react'
 import * as THREE from 'three'
 import type { ColorTheme } from '@/lib/themes'
+import { AnimationManager } from '@/lib/AnimationManager'
 
 interface ScreenFlashProps {
   bass: number
@@ -16,39 +16,54 @@ export default function ScreenFlash({ bass, beatDetected, theme }: ScreenFlashPr
   const flashIntensityRef = useRef(0)
   const lastBeatTimeRef = useRef(0)
 
-  useFrame((state) => {
-    if (!meshRef.current) return
+  // Store props in refs for AnimationManager
+  const bassRef = useRef(bass)
+  const beatDetectedRef = useRef(beatDetected)
+  bassRef.current = bass
+  beatDetectedRef.current = beatDetected
 
-    const time = state.clock.elapsedTime
-    const material = meshRef.current.material as THREE.MeshBasicMaterial
+  // Migrated to AnimationManager
+  useEffect(() => {
+    const unregister = AnimationManager.register(
+      'screen-flash-animation',
+      (time) => {
+        if (!meshRef.current) return
 
-    // Trigger flash on beat - much more subtle
-    if (beatDetected && time - lastBeatTimeRef.current > 0.2) { // Increased cooldown
-      lastBeatTimeRef.current = time
-      flashIntensityRef.current = bass * 0.2 // Reduced from 0.6 to 0.2
+        const material = meshRef.current.material as THREE.MeshBasicMaterial
 
-      // Random color from theme only on very big beats
-      if (bass > 0.85) { // Increased threshold from 0.7 to 0.85
-        const colors = theme ? [
-          theme.colors.primary,
-          theme.colors.secondary,
-          theme.colors.tertiary,
-        ] : ['#ffffff']
-        const randomColor = colors[Math.floor(Math.random() * colors.length)]
-        material.color.set(randomColor)
-      }
-    }
+        // Trigger flash on beat - much more subtle
+        if (beatDetectedRef.current && time - lastBeatTimeRef.current > 0.2) {
+          lastBeatTimeRef.current = time
+          flashIntensityRef.current = bassRef.current * 0.2
 
-    // Decay flash intensity very quickly
-    flashIntensityRef.current *= 0.9 // Faster decay
+          // Random color from theme only on very big beats
+          if (bassRef.current > 0.85) {
+            const colors = theme ? [
+              theme.colors.primary,
+              theme.colors.secondary,
+              theme.colors.tertiary,
+            ] : ['#ffffff']
+            const randomColor = colors[Math.floor(Math.random() * colors.length)]
+            material.color.set(randomColor)
+          }
+        }
 
-    // Update material opacity
-    material.opacity = flashIntensityRef.current
+        // Decay flash intensity very quickly
+        flashIntensityRef.current *= 0.9
 
-    // Very subtle pulse with bass
-    const bassPulse = bass * 0.05 // Reduced from 0.15 to 0.05
-    material.opacity = Math.max(material.opacity, bassPulse)
-  })
+        // Update material opacity
+        material.opacity = flashIntensityRef.current
+
+        // Very subtle pulse with bass
+        const bassPulse = bassRef.current * 0.05
+        material.opacity = Math.max(material.opacity, bassPulse)
+      },
+      'low', // Low priority - subtle effect
+      60 // 60 Hz - smooth flash
+    )
+
+    return unregister
+  }, [theme])
 
   return (
     <mesh ref={meshRef} position={[0, 0, 59.9]}>

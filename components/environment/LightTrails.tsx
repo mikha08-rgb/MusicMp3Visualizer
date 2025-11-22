@@ -1,9 +1,9 @@
 'use client'
 
-import { useRef, useMemo } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useRef, useMemo, useEffect } from 'react'
 import * as THREE from 'three'
 import type { ColorTheme } from '@/lib/themes'
+import { AnimationManager } from '@/lib/AnimationManager'
 
 interface LightTrailsProps {
   bass: number
@@ -11,7 +11,7 @@ interface LightTrailsProps {
   theme?: ColorTheme
 }
 
-// Single light trail ribbon
+// Single light trail ribbon - optimized with AnimationManager
 function LightTrail({
   radius,
   height,
@@ -29,6 +29,10 @@ function LightTrail({
 }) {
   const trailRef = useRef<THREE.Mesh>(null)
 
+  // Store bass in ref for AnimationManager
+  const bassRef = useRef(bass)
+  bassRef.current = bass
+
   // Create tube path
   const tubePath = useMemo(() => {
     const points: THREE.Vector3[] = []
@@ -44,27 +48,38 @@ function LightTrail({
     return new THREE.CatmullRomCurve3(points, true)
   }, [radius, height])
 
-  useFrame((state) => {
-    if (!trailRef.current) return
+  // Migrated to AnimationManager
+  useEffect(() => {
+    const trailId = `light-trail-${radius}-${height}`
+    const unregister = AnimationManager.register(
+      trailId,
+      (time, delta) => {
+        if (!trailRef.current) return
 
-    // Rotate trail
-    trailRef.current.rotation.y += state.clock.getDelta() * speed
+        // Rotate trail
+        trailRef.current.rotation.y += delta * speed
 
-    // Bass reactive glow
-    const material = trailRef.current.material as THREE.MeshStandardMaterial
-    material.emissiveIntensity = 2 + bass * 3
-  })
+        // Bass reactive glow
+        const material = trailRef.current.material as THREE.MeshStandardMaterial
+        material.emissiveIntensity = 2 + bassRef.current * 3
+      },
+      'medium', // Medium priority - visible effect
+      60 // 60 Hz - smooth rotation
+    )
+
+    return unregister
+  }, [speed, radius, height])
 
   return (
     <mesh ref={trailRef} rotation={[0, offset, 0]}>
       <tubeGeometry args={[tubePath, 64, 0.1, 8, true]} />
-      <meshStandardMaterial
+      {/* ULTRA-OPTIMIZATION: MeshBasic for light trails */}
+      <meshBasicMaterial
         color={color}
-        emissive={color}
-        emissiveIntensity={2}
         transparent
         opacity={0.8}
         side={THREE.DoubleSide}
+        toneMapped={false}
       />
     </mesh>
   )
@@ -138,7 +153,7 @@ export default function LightTrails({ bass, mids, theme }: LightTrailsProps) {
   )
 }
 
-// Vertical light ribbon connecting different levels
+// Vertical light ribbon connecting different levels - optimized with AnimationManager
 function VerticalRibbon({
   angle,
   radius,
@@ -151,6 +166,10 @@ function VerticalRibbon({
   bass: number
 }) {
   const ribbonRef = useRef<THREE.Mesh>(null)
+
+  // Store bass in ref for AnimationManager
+  const bassRef = useRef(bass)
+  bassRef.current = bass
 
   const verticalPath = useMemo(() => {
     const points: THREE.Vector3[] = []
@@ -165,24 +184,35 @@ function VerticalRibbon({
     return new THREE.CatmullRomCurve3(points, false)
   }, [angle, radius])
 
-  useFrame(() => {
-    if (!ribbonRef.current) return
+  // Migrated to AnimationManager
+  useEffect(() => {
+    const ribbonId = `vertical-ribbon-${angle}-${radius}`
+    const unregister = AnimationManager.register(
+      ribbonId,
+      () => {
+        if (!ribbonRef.current) return
 
-    // Bass reactive glow
-    const material = ribbonRef.current.material as THREE.MeshStandardMaterial
-    material.emissiveIntensity = 1.5 + bass * 2
-  })
+        // Bass reactive glow
+        const material = ribbonRef.current.material as THREE.MeshStandardMaterial
+        material.emissiveIntensity = 1.5 + bassRef.current * 2
+      },
+      'medium', // Medium priority
+      60 // 60 Hz
+    )
+
+    return unregister
+  }, [angle, radius])
 
   return (
     <mesh ref={ribbonRef}>
       <tubeGeometry args={[verticalPath, 20, 0.08, 6, false]} />
-      <meshStandardMaterial
+      {/* ULTRA-OPTIMIZATION: MeshBasic for glowing ribbons */}
+      <meshBasicMaterial
         color={color}
-        emissive={color}
-        emissiveIntensity={1.5}
         transparent
         opacity={0.7}
         side={THREE.DoubleSide}
+        toneMapped={false}
       />
     </mesh>
   )

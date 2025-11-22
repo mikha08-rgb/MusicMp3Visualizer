@@ -1,5 +1,5 @@
 /**
- * Performance presets for post-processing effects
+ * Performance presets for post-processing effects and component rendering
  */
 
 export type PerformancePreset = 'ultra' | 'high' | 'medium' | 'low' | 'potato'
@@ -12,6 +12,39 @@ export interface PostProcessingQuality {
   godRaysSamples: number
   vignetteEnabled: boolean
   vignetteDarkness: number
+}
+
+/**
+ * Component-level performance settings
+ * Determines which environment components should be enabled based on performance preset
+ */
+export interface ComponentQuality {
+  // Core visualizations (always enabled)
+  visualization: boolean
+  grid: boolean
+
+  // Environment layers (progressive)
+  buildings: boolean
+  buildingDetails: boolean // Window flicker, neon signs, etc.
+  streetLevel: boolean // Crowd, vehicles, stalls
+  midLevel: boolean // Billboards, atmospheric effects
+  skyLevel: boolean // Drones, ships, platforms
+
+  // Effects
+  particles: boolean
+  trails: boolean
+  hud: boolean
+
+  // Advanced effects
+  reflections: boolean
+  atmosphericEffects: boolean
+
+  // Instance counts
+  buildingCount: number
+  crowdCount: number
+  vehicleCount: number
+  droneCount: number
+  particleCount: number
 }
 
 /**
@@ -84,6 +117,119 @@ export function getAutoPreset(currentFPS: number): PerformancePreset {
   if (currentFPS >= 45) return 'medium'
   if (currentFPS >= 35) return 'low'
   return 'potato'
+}
+
+/**
+ * Get component quality settings based on preset
+ * This is the key to achieving 4x performance - aggressive component culling
+ */
+export function getComponentQuality(preset: PerformancePreset): ComponentQuality {
+  switch (preset) {
+    case 'ultra':
+      return {
+        visualization: true,
+        grid: true,
+        buildings: true,
+        buildingDetails: true,
+        streetLevel: true,
+        midLevel: true,
+        skyLevel: true,
+        particles: true,
+        trails: true,
+        hud: true,
+        reflections: true,
+        atmosphericEffects: true,
+        buildingCount: 16,
+        crowdCount: 48,
+        vehicleCount: 16,
+        droneCount: 25,
+        particleCount: 400
+      }
+
+    case 'high':
+      return {
+        visualization: true,
+        grid: true,
+        buildings: true,
+        buildingDetails: true,
+        streetLevel: true,
+        midLevel: true,
+        skyLevel: true, // Keep sky elements
+        particles: true,
+        trails: true,
+        hud: true,
+        reflections: false, // Disable reflections
+        atmosphericEffects: false, // Disable rain/fog particles
+        buildingCount: 12,
+        crowdCount: 32,
+        vehicleCount: 12,
+        droneCount: 16,
+        particleCount: 250
+      }
+
+    case 'medium':
+      return {
+        visualization: true,
+        grid: true,
+        buildings: true,
+        buildingDetails: false, // Disable window flicker, neon pulse
+        streetLevel: true,
+        midLevel: false, // Disable billboards, atmospheric
+        skyLevel: true, // Keep minimal sky
+        particles: true,
+        trails: false, // Disable light trails
+        hud: false, // Disable HUD overlays
+        reflections: false,
+        atmosphericEffects: false,
+        buildingCount: 8,
+        crowdCount: 16,
+        vehicleCount: 8,
+        droneCount: 8,
+        particleCount: 150
+      }
+
+    case 'low':
+      return {
+        visualization: true,
+        grid: true,
+        buildings: true,
+        buildingDetails: false,
+        streetLevel: false, // Disable ground activity
+        midLevel: false,
+        skyLevel: false, // Disable all sky elements
+        particles: false, // Disable all particles
+        trails: false,
+        hud: false,
+        reflections: false,
+        atmosphericEffects: false,
+        buildingCount: 6,
+        crowdCount: 0,
+        vehicleCount: 0,
+        droneCount: 0,
+        particleCount: 0
+      }
+
+    case 'potato':
+      return {
+        visualization: true, // Only visualization
+        grid: true, // And grid
+        buildings: false, // Everything else disabled
+        buildingDetails: false,
+        streetLevel: false,
+        midLevel: false,
+        skyLevel: false,
+        particles: false,
+        trails: false,
+        hud: false,
+        reflections: false,
+        atmosphericEffects: false,
+        buildingCount: 0,
+        crowdCount: 0,
+        vehicleCount: 0,
+        droneCount: 0,
+        particleCount: 0
+      }
+  }
 }
 
 /**

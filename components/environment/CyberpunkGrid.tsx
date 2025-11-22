@@ -1,9 +1,10 @@
 'use client'
 
-import { useRef, useMemo } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useRef, useMemo, useEffect } from 'react'
 import * as THREE from 'three'
 import type { ColorTheme } from '@/lib/themes'
+import { geometries } from '@/lib/geometry-library'
+import { AnimationManager } from '@/lib/AnimationManager'
 
 interface CyberpunkGridProps {
   bass: number
@@ -18,6 +19,10 @@ export default function CyberpunkGrid({ bass, theme }: CyberpunkGridProps) {
 
   const gridColor = theme?.colors.primary || '#00ffff'
   const gridColor2 = theme?.colors.secondary || '#ff00ff'
+
+  // Store bass in ref for AnimationManager
+  const bassRef = useRef(bass)
+  bassRef.current = bass
 
   // Tron-style scan line that sweeps across the grid
   const scanLineMaterial = useMemo(() => {
@@ -42,44 +47,52 @@ export default function CyberpunkGrid({ bass, theme }: CyberpunkGridProps) {
     })
   }, [gridColor2])
 
-  useFrame((state) => {
-    if (!gridRef.current || !groundRef.current) return
+  // Migrated to AnimationManager for better performance
+  useEffect(() => {
+    const unregister = AnimationManager.register(
+      'cyberpunk-grid-animation',
+      (time) => {
+        if (!gridRef.current || !groundRef.current) return
 
-    // Subtle pulse with bass
-    const pulseFactor = 1 + bass * 0.1
-    gridRef.current.scale.setScalar(pulseFactor)
+        // Subtle pulse with bass
+        const pulseFactor = 1 + bassRef.current * 0.1
+        gridRef.current.scale.setScalar(pulseFactor)
 
-    // Grid opacity pulses gently
-    const material = gridRef.current.material as THREE.Material
-    if (Array.isArray(material)) {
-      material.forEach(mat => {
-        if ('opacity' in mat) {
-          mat.opacity = 0.3 + bass * 0.2
+        // Grid opacity pulses gently
+        const material = gridRef.current.material as THREE.Material
+        if (Array.isArray(material)) {
+          material.forEach(mat => {
+            if ('opacity' in mat) {
+              mat.opacity = 0.3 + bassRef.current * 0.2
+            }
+          })
+        } else {
+          if ('opacity' in material) {
+            material.opacity = 0.3 + bassRef.current * 0.2
+          }
         }
-      })
-    } else {
-      if ('opacity' in material) {
-        material.opacity = 0.3 + bass * 0.2
-      }
-    }
 
-    // Ground plane subtle glow
-    const groundMat = groundRef.current.material as THREE.MeshStandardMaterial
-    groundMat.emissiveIntensity = 0.05 + bass * 0.1
+        // Ground plane subtle glow
+        const groundMat = groundRef.current.material as THREE.MeshStandardMaterial
+        groundMat.emissiveIntensity = 0.05 + bassRef.current * 0.1
 
-    // Animated scan lines sweeping across the grid
-    if (scanLineRef.current) {
-      const time = state.clock.elapsedTime
-      scanLineRef.current.position.z = Math.sin(time * 0.5) * 90
-      scanLineMaterial.emissiveIntensity = 3 + bass * 2
-    }
+        // Animated scan lines sweeping across the grid
+        if (scanLineRef.current) {
+          scanLineRef.current.position.z = Math.sin(time * 0.5) * 90
+          scanLineMaterial.emissiveIntensity = 3 + bassRef.current * 2
+        }
 
-    if (scanLine2Ref.current) {
-      const time = state.clock.elapsedTime
-      scanLine2Ref.current.position.x = Math.cos(time * 0.6) * 90
-      scanLine2Material.emissiveIntensity = 3 + bass * 2
-    }
-  })
+        if (scanLine2Ref.current) {
+          scanLine2Ref.current.position.x = Math.cos(time * 0.6) * 90
+          scanLine2Material.emissiveIntensity = 3 + bassRef.current * 2
+        }
+      },
+      'high', // High priority - always visible ground layer
+      60 // 60 Hz - smooth animation
+    )
+
+    return unregister
+  }, [scanLineMaterial, scanLine2Material])
 
   return (
     <group position={[0, -0.5, 0]}>
@@ -118,17 +131,17 @@ export default function CyberpunkGrid({ bass, theme }: CyberpunkGridProps) {
         <primitive object={scanLine2Material} attach="material" />
       </mesh>
 
-      {/* Glowing grid intersections at corners */}
+      {/* Glowing grid intersections at corners - using shared geometry */}
       {[-50, 0, 50].map((x) =>
         [-50, 0, 50].map((z) => (
           <mesh key={`intersection-${x}-${z}`} position={[x, 0.2, z]}>
-            <sphereGeometry args={[0.5, 8, 8]} />
-            <meshStandardMaterial
+            <primitive object={geometries.sphere.small} />
+            {/* ULTRA-OPTIMIZATION: MeshBasic for glowing intersections */}
+            <meshBasicMaterial
               color={gridColor}
-              emissive={gridColor}
-              emissiveIntensity={2 + bass * 1}
               transparent
               opacity={0.8}
+              toneMapped={false}
             />
           </mesh>
         ))
