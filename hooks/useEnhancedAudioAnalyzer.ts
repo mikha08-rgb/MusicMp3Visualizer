@@ -14,7 +14,7 @@ interface EnhancedAudioData {
 }
 
 interface AudioAnalyzerControls {
-  loadAudio: (file: File) => Promise<void>
+  loadAudio: (source: File | string) => Promise<void>
   play: () => void
   pause: () => void
   togglePlayPause: () => void
@@ -153,8 +153,8 @@ export function useEnhancedAudioAnalyzer(fftSize: number = 2048) {
     }
   }, [fftSize])
 
-  // Load audio file
-  const loadAudio = useCallback(async (file: File) => {
+  // Load audio file or URL
+  const loadAudio = useCallback(async (source: File | string) => {
     try {
       initializeAudioContext()
 
@@ -164,7 +164,20 @@ export function useEnhancedAudioAnalyzer(fftSize: number = 2048) {
         audioElementRef.current.crossOrigin = 'anonymous'
       }
 
-      const audioUrl = URL.createObjectURL(file)
+      let audioUrl: string
+      let fileName: string
+
+      // Handle File object or URL string
+      if (typeof source === 'string') {
+        // URL string - use directly
+        audioUrl = source
+        fileName = source.split('/').pop() || 'Demo Track'
+      } else {
+        // File object - create blob URL
+        audioUrl = URL.createObjectURL(source)
+        fileName = source.name
+      }
+
       audioElementRef.current.src = audioUrl
 
       // Wait for metadata to load
@@ -175,7 +188,10 @@ export function useEnhancedAudioAnalyzer(fftSize: number = 2048) {
           setState(prev => ({
             ...prev,
             duration: audioElementRef.current?.duration || 0,
-            audioFile: file,
+            // Create a fake File object for URL sources to maintain compatibility
+            audioFile: typeof source === 'string'
+              ? new File([], fileName, { type: 'audio/mpeg' })
+              : source,
           }))
           resolve()
         }
@@ -189,9 +205,10 @@ export function useEnhancedAudioAnalyzer(fftSize: number = 2048) {
         analyzerRef.current!.connect(audioContextRef.current.destination)
       }
 
-      console.log('Audio loaded successfully:', file.name)
+      console.log('Audio loaded successfully:', fileName)
     } catch (error) {
       console.error('Error loading audio:', error)
+      throw error
     }
   }, [initializeAudioContext])
 

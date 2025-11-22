@@ -12,6 +12,7 @@ import VisualizationModePicker from '@/components/VisualizationModePicker'
 import { FPSDisplay } from '@/components/FPSCounter'
 import { themes, type ColorTheme } from '@/lib/themes'
 import { FPSMonitor, getAutoPreset, type PerformancePreset } from '@/lib/performance-helper'
+import { getDefaultDemoTrack } from '@/lib/demo-tracks'
 
 export default function Home() {
   const [audioState, audioControls] = useEnhancedAudioAnalyzer(2048)
@@ -55,6 +56,22 @@ export default function Home() {
       }, 100)
     } catch (error) {
       console.error('Error loading audio:', error)
+      setIsLoading(false)
+    }
+  }, [audioControls])
+
+  const handleDemoSelect = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const demoTrack = getDefaultDemoTrack()
+      await audioControls.loadAudio(demoTrack.url)
+      // Auto-play after loading
+      setTimeout(() => {
+        audioControls.play()
+        setIsLoading(false)
+      }, 100)
+    } catch (error) {
+      console.error('Error loading demo audio:', error)
       setIsLoading(false)
     }
   }, [audioControls])
@@ -284,7 +301,10 @@ export default function Home() {
       {!hasAudio && (
         <div className="absolute inset-0 flex items-center justify-center p-8 z-20">
           <div className="w-full max-w-lg">
-            <FileUpload onFileSelect={handleFileSelect} />
+            <FileUpload
+              onFileSelect={handleFileSelect}
+              onDemoSelect={handleDemoSelect}
+            />
           </div>
         </div>
       )}
